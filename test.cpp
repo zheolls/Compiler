@@ -1,10 +1,3 @@
-#include <iostream>
-#include "lex.hpp"
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <stdlib.h>
-using namespace std;
 //从文件读入到string里
 string readFileIntoString(char* filename)
 {
@@ -22,9 +15,7 @@ int main() {
 	char* fn = (char*)"test.cpp";
 	scode = readFileIntoString(fn);
 	lex::lex(scode);
-	lex::per_process();
-	cout << lex::processedCode << endl;
 	while (lex::Scanner()) {
-		cout <<"( "<< lex::Token << ", " << lex::syn <<")"<< endl;
+		cout << "( " << lex::Token << ", " << lex::syn << ")" << endl;
 	}
 }
