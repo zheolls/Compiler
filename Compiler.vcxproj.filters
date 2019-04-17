@@ -18,6 +18,9 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="symboltable.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lex.hpp">
@@ -27,6 +30,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Error.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="symboltable.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

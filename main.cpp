@@ -4,6 +4,8 @@
 #include <fstream>
 #include <sstream>
 #include <stdlib.h>
+#include <vector>
+#include "symboltable.hpp"
 using namespace std;
 //从文件读入到string里
 string readFileIntoString(char* filename)
@@ -17,14 +19,25 @@ string readFileIntoString(char* filename)
 	//返回与流对象buf关联的字符串
 	return buf.str();
 }
+
+void genetable() {
+
+}
+
 int main() {
 	string scode;
-	char* fn = (char*)"test.cpp";
+	double a = 1.3;
+	vector<lex::Token> tokenlist;
+	char* fn = (char*)"main.cpp";
 	scode = readFileIntoString(fn);
 	lex::lex(scode);
 	lex::per_process();
+	symboltable::SYNBL synbl;
+	
 	cout << lex::processedCode << endl;
 	while (lex::Scanner()) {
-		cout <<"( "<< lex::Token << ", " << lex::syn <<")"<< endl;
+		tokenlist.push_back(lex::token);
+		cout <<"( "<< lex::token.type<< ", " << lex::token.val<<", " <<lex::token.syn<<")"<< endl;
 	}
+	cout << tokenlist.size() << endl;
 }
