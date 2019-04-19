@@ -1,18 +1,16 @@
 #include <iostream>
-#include "lex.hpp"
-#include <string>
 #include <fstream>
+#include "lex.hpp"
 #include <sstream>
-#include <stdlib.h>
 #include <vector>
+#include <stdlib.h>
 #include "symboltable.hpp"
-using namespace std;
 //从文件读入到string里
-string readFileIntoString(char* filename)
+std::string readFileIntoString(char* filename)
 {
-	ifstream ifile(filename);
+	std::ifstream ifile(filename);
 	//将文件读入到ostringstream对象buf中
-	ostringstream buf;
+	std::ostringstream buf;
 	char ch;
 	while (buf && ifile.get(ch))
 		buf.put(ch);
@@ -20,26 +18,19 @@ string readFileIntoString(char* filename)
 	return buf.str();
 }
 
-void genetable() {
-
-}
 
 int main() {
-	string scode;
-	int a = 1;
-	int a = 2;
-	double a = 1.3;
-	vector<lex::Token> tokenlist;
+	std::string scode;
+	std::vector<lex::Token> tokenlist;
 	char* fn = (char*)"main.cpp";
 	scode = readFileIntoString(fn);
-	lex::lex(scode);
-	lex::per_process();
-	symboltable::_SYNBL synbl;
+	lex lex(scode);
+	lex.per_process();
 	
-	cout << lex::processedCode << endl;
-	while (lex::Scanner()) {
-		tokenlist.push_back(lex::token);
-		cout <<"( "<< lex::token.typeset<< ", " << lex::token.val<<", " <<lex::token.syn<<")"<< endl;
+	std::cout << lex.processedCode << std::endl;
+	while (lex.Scanner()) {
+		tokenlist.push_back(lex.token);
+		std::cout <<"( "<< lex.token.typeset<< ", " << lex.token.val<<", " <<lex.token.syn<<")"<< std::endl;
 	}
-	cout << tokenlist.size() << endl;
+	std::cout << tokenlist.size() << std::endl;
 }

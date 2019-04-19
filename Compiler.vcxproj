@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="lex.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="symboltable.cpp" />
   </ItemGroup>
