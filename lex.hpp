@@ -9,7 +9,7 @@ namespace lex {
 	std::string processedCode;
 	struct Token : std::string {
 		std::string val;
-		std::string type;
+		std::string typeset;
 		std::string attr;
 		int syn;
 	}token;
@@ -131,11 +131,11 @@ namespace lex {
 			syn = searchResearve(token);
 			if (syn == _NOT_RESERVE_WORD) {
 				syn = _IDENTIFIER;
-				token.type = "IDENTIFIER";
+				token.typeset = "IDENTIFIER";
 				token.val = token;
 			}
 			else {
-				token.type = "RESERVE";
+				token.typeset = "RESERVE";
 				token.val = token;
 			}
 		}
@@ -161,7 +161,7 @@ namespace lex {
 			i--;
 			syn = _NUMBER;
 			token.val = token;
-			token.type = "CONSTANT";
+			token.typeset = "CONSTANT";
 		}
 		else if (is_delimiter(code[i])) {
 			token.push_back(code[i]);
@@ -171,7 +171,7 @@ namespace lex {
 					break;
 				}
 			}
-			token.type = "DELIMITER";
+			token.typeset = "DELIMITER";
 			token.val = token;
 		}
 		else if (code[i] == '+') {
@@ -317,11 +317,11 @@ namespace lex {
 			throw Error::formError::unkownerror_1;
 		}
 		if (syn > _RESERVE_NUM && syn <= _OPERATOR_NUM + _RESERVE_NUM) {
-			token.type="OPERATOR";
+			token.typeset="OPERATOR";
 			token.val = operatorWord[syn - _RESERVE_NUM - 1];
 		}
 		//else if (syn >= _RESERVE_NUM + _OPERATOR_NUM && syn <= _OPERATOR_NUM + _RESERVE_NUM + _DELIMETER_NUM) {
-		//	token.type = delimiterWord[syn - _RESERVE_NUM - _OPERATOR_NUM - 1];
+		//	token.typeset = delimiterWord[syn - _RESERVE_NUM - _OPERATOR_NUM - 1];
 		//	token.val = "__";
 		//}
 

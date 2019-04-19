@@ -26,18 +26,20 @@ void genetable() {
 
 int main() {
 	string scode;
+	int a = 1;
+	int a = 2;
 	double a = 1.3;
 	vector<lex::Token> tokenlist;
 	char* fn = (char*)"main.cpp";
 	scode = readFileIntoString(fn);
 	lex::lex(scode);
 	lex::per_process();
-	symboltable::SYNBL synbl;
+	symboltable::_SYNBL synbl;
 	
 	cout << lex::processedCode << endl;
 	while (lex::Scanner()) {
 		tokenlist.push_back(lex::token);
-		cout <<"( "<< lex::token.type<< ", " << lex::token.val<<", " <<lex::token.syn<<")"<< endl;
+		cout <<"( "<< lex::token.typeset<< ", " << lex::token.val<<", " <<lex::token.syn<<")"<< endl;
 	}
 	cout << tokenlist.size() << endl;
 }
