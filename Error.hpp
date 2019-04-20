@@ -15,5 +15,6 @@ namespace Error {
 	namespace stateError {
 		const std::string statement_error = "声明错误";
 		const std::string unique_identifer = "标识符重复定义";
+		const std::string type_errot = "类型未定义";
 	}
 }

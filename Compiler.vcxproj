@@ -133,6 +133,9 @@
     <ClInclude Include="lex.hpp" />
     <ClInclude Include="symboltable.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="lex.md" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

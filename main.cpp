@@ -26,7 +26,9 @@ int main() {
 	scode = readFileIntoString(fn);
 	lex lex(scode);
 	lex.per_process();
-	
+	while (const int i = 0) {
+
+	}
 	std::cout << lex.processedCode << std::endl;
 	while (lex.Scanner()) {
 		tokenlist.push_back(lex.token);

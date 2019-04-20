@@ -1,6 +1,6 @@
-#include <string>
+//#include <string>
 #include <vector>
-
+#include "Error.hpp"
 class symboltable {
 public:
 	enum catset { FUNC, CONS, TYPE, DOM, VAL, YF, VN };
@@ -12,12 +12,14 @@ public:
 		LONGDOUBLE,							//16 byte
 		ARRAY, STRUCT, RETURN, SUBBLOCK				//特殊类型
 	};
+
+
 	struct symboltuple {
 		std::string NAME;
 		int TYP;
 		catset CAT;
-		int ADDR;
-		symboltuple(std::string name, int typ, catset cat, int addr);
+		void* ADDR;
+		symboltuple(std::string name, int typ, catset cat, void* addr);
 		symboltuple();
 	};
 	struct ExToken {
@@ -29,6 +31,7 @@ public:
 		int UP;
 		int CTP;
 		int CLEN;
+		void* VALUE;
 	};
 	struct typeltuple {
 		typeset TVAL;
@@ -71,6 +74,7 @@ public:
 		symboltuple get(std::string s);
 
 	};
+	const int a[1] = { 0 };
 	typedef std::vector<std::string> _CONSL;
 	typedef std::vector<int> _LENL;
 	typedef std::vector<_SYNBL> _STRUL, _SYNL;
@@ -89,4 +93,10 @@ public:
 	//p指向当前表，a为Token序列，pos为序列扫描指针
 	bool Generate_symbol_table(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos, int& length);
 	int Generate_type_table(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos, int& length);
+	int GetTypeAddr(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos);
+	int GetTypeLength(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos);
+	bool Scanner() {
+
+
+	}
 };

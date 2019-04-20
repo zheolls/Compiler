@@ -1,4 +1,5 @@
 #include "symboltable.hpp"
+#include "lex.hpp"
 bool symboltable::_SYNBL::put(ExToken t)
 {
 
@@ -79,25 +80,35 @@ bool symboltable::Generate_symbol_table(_SYNBL& p, _TYPEL& q, std::vector<ExToke
 
 	while (a[pos].TVAL != RETURN) {
 		if (symboltable::is_existed(p, a[pos]) && a[pos].CAT != FUNC) {
-			//throw Error::stateError::statement_error;
+			throw Error::stateError::statement_error;
 		}
 		switch (a[pos].CAT)
 		{
-		case symboltable::FUNC:
+		case symboltable::FUNC: //函数
 			break;
-		case symboltable::CONS:
-			break;
-		case symboltable::TYPE: {
+		case symboltable::CONS: //常量
+		{
+			int addr = GetTypeAddr(p, q, a, pos);
+			p.TABLE.push_back(symboltuple(a[pos].NAME, addr, TYPE, a[pos].VALUE));
+			break; 
+		}
+		case symboltable::TYPE: //新类型
+		{
 
 			length = NULL;
 			int returnpos = Generate_type_table(p, q, a, pos, length);
-			p.TABLE.push_back(symboltuple(a[pos].NAME, returnpos, TYPE, length));
+			lenl.push_back(length);
+			p.TABLE.push_back(symboltuple(a[pos].NAME, returnpos, TYPE, &lenl[lenl.size() - 1]));
 			break;
 		}
 		case symboltable::DOM:
 			break;
-		case symboltable::VAL:
+		case symboltable::VAL: //变量
+		{
+			int addr = GetTypeAddr(p, q, a, pos);
+			p.TABLE.push_back(symboltuple(a[pos].NAME, addr, TYPE, a[pos].VALUE));
 			break;
+		}
 		case symboltable::YF:
 			break;
 		case symboltable::VN:
@@ -200,7 +211,6 @@ int symboltable::Generate_type_table(_SYNBL& p, _TYPEL& q, std::vector<ExToken> 
 		int length_2;
 		_TYPEL q2;
 		q2.prev = &q;
-		synbl.push_back(p2);
 
 		Generate_symbol_table(p2, q2, a, pos, length_2);
 		length += length_2;
@@ -215,7 +225,52 @@ int symboltable::Generate_type_table(_SYNBL& p, _TYPEL& q, std::vector<ExToken> 
 	return (int)a[pos].TVAL;
 }
 
-symboltable::symboltuple::symboltuple(std::string name, int typ, catset cat, int addr)
+int symboltable::GetTypeAddr(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos)
+{
+	if (a[pos].TVAL <= LONGDOUBLE) {
+		return int(a[pos].TVAL);
+	}
+	else {
+		for (int i = 0; i < p.TABLE.size(); i++) {
+			if (a[pos].NAME == p.TABLE[i].NAME) {
+				return p.TABLE[i].TYP;
+			}
+		}
+	}
+	throw Error::stateError::type_errot;
+}
+
+int symboltable::GetTypeLength(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos)
+{
+	if (a[pos].TVAL >= VOID && a[pos].TVAL <= USCHAR) {
+		return 1;
+	}
+	else if (a[pos].TVAL == SHORT) {
+		return 2;
+	}
+	else if (a[pos].TVAL >= UNSIGNED && a[pos].TVAL <= FLOAT) {
+		return 4;
+	}
+	else if (a[pos].TVAL>=LONG && a[pos].TVAL<=DOUBLE)
+	{
+		return 8;
+	}
+	else if (a[pos].TVAL==LONGDOUBLE)
+	{
+		return 16;
+	}
+	else
+	{
+		for (int i = 0; i < p.TABLE.size(); i++) {
+			if (a[pos].NAME == p.TABLE[i].NAME) {
+				return *(int*)(p.TABLE[i].ADDR);
+			}
+		}
+	}
+	return 0;
+}
+
+symboltable::symboltuple::symboltuple(std::string name, int typ, catset cat, void* addr)
 {
 	NAME = name; TYP = typ; CAT = cat; ADDR = addr;
 }
@@ -223,3 +278,4 @@ symboltable::symboltuple::symboltuple(std::string name, int typ, catset cat, int
 symboltable::symboltuple::symboltuple()
 {
 }
+
