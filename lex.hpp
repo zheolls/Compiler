@@ -16,6 +16,7 @@ public:
 		int syn;
 	}token;
 	lex(std::string s);
+	lex();
 	const std::string reserveWord[_RESERVE_NUM] = {
 		"auto", "break", "case", "char", "const", "continue",
 		"default", "do", "double", "else", "enum", "extern",
@@ -41,5 +42,21 @@ public:
 	bool Scanner();
 };
 class Derivation {
+	std::string lexcode;
+	lex lexobject;
+	struct derivate {
+		std::string NAME;
+		derivate* brother;
+		derivate* son;
+		derivate* next;
+		bool addbrother(derivate *s);
+		bool addson(derivate* s);
+		bool addnext(derivate* s);
+		bool setNAME(std::string s);
+	};
+	derivate start;
+	Derivation(std::string s);
+	void per_process();
+	bool Scanner();
 
 };

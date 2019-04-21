@@ -9,6 +9,13 @@ lex::lex(std::string s)
 	ptr = 0;
 }
 
+lex::lex()
+{
+	syn = 0;
+	ptr = 0;
+	codeLength = 0;
+}
+
 int lex::searchResearve(std::string keyword)
 {
 	for (int i = 0; i < _RESERVE_NUM; i++) {
@@ -313,4 +320,124 @@ bool lex::Scanner()
 	i++;
 	ptr = i;
 	return true;
+}
+
+Derivation::Derivation(std::string s)
+{
+	lexcode = s;
+}
+
+void Derivation::per_process()
+{
+	
+}
+
+bool Derivation::Scanner()
+{
+	int i = 0;
+	int syn;
+	derivate* p=&start;
+	derivate* q = &start;
+	derivate* r = &start;
+	std::string code = lexcode;
+	std::string token = "";
+	while (i<lexcode.length())
+	{
+
+		while (code[i] == ' ') {
+			i++;
+		}
+		if (lexobject.is_alpha(code[i]) || code[i] == '_') {
+			token.push_back(code[i]);
+			i++;
+			while (lexobject.is_alpha(code[i]) || lexobject.is_digit(code[i]) || code[i] == '_')
+			{
+				token.push_back(code[i]);
+				i++;
+			}
+			i--;
+			if (token == "start") {
+				derivate* newnode = &start;
+				newnode->setNAME(token);
+				newnode->addbrother(nullptr);
+				newnode->addson(nullptr);
+				i += 2;
+				continue;
+			}
+
+			else if (i < code.length() - 2) {
+				if (code[i + 1] == ':' && code[i + 2] == '\n') {
+
+					derivate* newnode = (derivate*)malloc(sizeof(derivate));
+					newnode->setNAME(token);
+					newnode->addbrother(nullptr);
+					newnode->addson(nullptr);
+					p->addbrother(newnode);
+				}
+			}
+			else if (code[i + 1] == '\n') {
+				derivate* newnode = (derivate*)malloc(sizeof(derivate));
+				newnode->setNAME(token);
+				newnode->addbrother(nullptr);
+				newnode->addson(nullptr);
+				q->addbrother(newnode);
+				r = q;
+
+			}
+			else if (p=q){
+				derivate* newnode = (derivate*)malloc(sizeof(derivate));
+				newnode->setNAME(token);
+				newnode->addbrother(nullptr);
+				newnode->addson(nullptr);
+				p->addson(newnode);
+				q = newnode;
+				r = q;
+			}
+			else if (q=r)
+			{
+				derivate* newnode = (derivate*)malloc(sizeof(derivate));
+				newnode->setNAME(token);
+				newnode->addbrother(nullptr);
+				newnode->addson(nullptr);
+				q->addson(newnode);
+				r = newnode;
+			}
+			else {
+				derivate* newnode = (derivate*)malloc(sizeof(derivate));
+				newnode->setNAME(token);
+				newnode->addbrother(nullptr);
+				newnode->addson(nullptr);
+				r->addbrother(newnode);
+			}
+		}
+
+
+
+
+	}
+	return false;
+}
+
+bool Derivation::derivate::addbrother(derivate* s)
+{
+	this->brother = s;
+	return false;
+}
+
+bool Derivation::derivate::addson(derivate* s)
+{
+	this->son = s;
+	return false;
+}
+
+bool Derivation::derivate::addnext(derivate* s)
+{
+	this->next = s;
+	return false;
+}
+
+bool Derivation::derivate::setNAME(std::string s)
+{
+	this->NAME = s;
+	return false;
 }
