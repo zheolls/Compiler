@@ -5,6 +5,8 @@
 #include <vector>
 #include <stdlib.h>
 #include "symboltable.hpp"
+int a=1;
+
 //从文件读入到string里
 std::string readFileIntoString(char* filename)
 {
@@ -25,10 +27,11 @@ int main() {
 	char* fn = (char*)"main.cpp";
 	scode = readFileIntoString(fn);
 	lex lex(scode);
+	std::string s;
+	lex.searchResearve(s = "dasd");	
 	lex.per_process();
-	while (const int i = 0) {
-
-	}
+	
+	for (int i=0,int j=1; i < 10;i++,i-- )
 	std::cout << lex.processedCode << std::endl;
 	while (lex.Scanner()) {
 		tokenlist.push_back(lex.token);

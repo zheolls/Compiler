@@ -40,3 +40,6 @@ public:
 	void per_process();
 	bool Scanner();
 };
+class Derivation {
+
+};
