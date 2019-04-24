@@ -26,7 +26,13 @@ int main() {
 	std::vector<lex::Token> tokenlist;
 	char* fn = (char*)"main.cpp";
 	scode = readFileIntoString(fn);
-	lex lex(scode);
+	char* fn2 = (char*)"lex.md";
+	std::string str = readFileIntoString(fn2);
+	Derivation derivate= Derivation(str);
+	derivate.Scanner();
+	derivate.visitderivate();
+	std::cin >> scode;
+	/*lex lex(scode);
 	std::string s;
 	lex.searchResearve(s = "dasd");	
 	lex.per_process();
@@ -37,5 +43,5 @@ int main() {
 		tokenlist.push_back(lex.token);
 		std::cout <<"( "<< lex.token.typeset<< ", " << lex.token.val<<", " <<lex.token.syn<<")"<< std::endl;
 	}
-	std::cout << tokenlist.size() << std::endl;
+	std::cout << tokenlist.size() << std::endl;*/
 }

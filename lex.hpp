@@ -42,8 +42,10 @@ public:
 	bool Scanner();
 };
 class Derivation {
+private:
 	std::string lexcode;
 	lex lexobject;
+public:
 	struct derivate {
 		std::string NAME;
 		derivate* brother;
@@ -57,6 +59,9 @@ class Derivation {
 	derivate start;
 	Derivation(std::string s);
 	void per_process();
+	derivate* createnewnode(std::string token);
+	bool createderivation(std::string token, std::string code, int& i, derivate* p, derivate* q, derivate* r);
 	bool Scanner();
-
+	bool is_symbol(char s);
+	std::string  visitderivate();
 };

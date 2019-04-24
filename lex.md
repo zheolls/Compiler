@@ -1,4 +1,10 @@
-﻿indentifer:
+﻿start:
+variable_state ; start
+func_state ; start
+constant_state ; start
+customtype_state ; start
+
+indentifer:
 variable
 func
 customtype
@@ -36,31 +42,27 @@ arraylen:
 integer
 blank
 
-constant state:
-const variable state
+constant_state:
+const variable_state
 
-customtype state:
+customtype_state:
 struct customtype {
 	start
 }
 
-start:
-variable state ; start
-func state ; start
-constant state ; start
 
 
-variable state:
+variable_state:
 type variable
 type * variable
 type & variable
 array_state
 
-func state:
+func_state:
 type func (expression)
 type * func (expression)
 type & func (expression)
-func state { block code }
+func_state { block_code }
 
 func_expression:
 func(expression)
@@ -153,14 +155,14 @@ expression1 -> expression
 (expression)
 expression_1 [ expression ]
 e
-variable state
+variable_state
 
 while_expression:
 while ( expression ) sentence
 
-block code:
-variable state ; block code
-constant state ; block code
+block_code:
+variable_state ; block_code
+constant_state ; block_code
 sentence
 blank
 
@@ -180,4 +182,4 @@ for_expression
 if_expression
 while_expression
 expression ;
-{ block code }
+{ block_code }

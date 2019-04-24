@@ -332,11 +332,72 @@ void Derivation::per_process()
 	
 }
 
+Derivation::derivate* Derivation::createnewnode(std::string token)
+{
+	derivate* newnode = (derivate*)malloc(sizeof(derivate));
+	newnode->setNAME(token);
+	newnode->addbrother(nullptr);
+	newnode->addson(nullptr);
+	newnode->addnext(nullptr);
+	if (newnode)
+		return newnode;
+	else
+		return nullptr;
+}
+
+bool Derivation::createderivation(std::string token,std::string code,int & i, derivate* p, derivate* q, derivate* r)
+{
+	if (token == "start") {
+		derivate* newnode = &start;
+		newnode->setNAME(token);
+		newnode->addbrother(nullptr);
+		newnode->addson(nullptr);
+		i += 2;
+	}
+
+	else if (i < code.length() - 2) {
+		if (code[i + 1] == ':' && code[i + 2] == '\n') {
+			derivate* newnode = createnewnode(token);
+			p->addbrother(newnode);
+			p = newnode;
+			q = p;
+			r = p;
+			i += 2;
+		}
+	}
+	else if (code[i + 1] == '\n') {
+		derivate* newnode = createnewnode(token);
+		r->addnext(newnode);
+		r = p;
+		i++;
+
+	}
+	else if (p == q) {
+		derivate* newnode = createnewnode(token);
+		p->addson(newnode);
+		q = newnode;
+		r = q;
+	}
+	else if (r == p)
+	{
+		derivate* newnode = createnewnode(token);
+		q->addbrother(newnode);
+		q = newnode;
+		r = newnode;
+	}
+	else {
+		derivate* newnode = createnewnode(token);
+		r->addnext(newnode);
+		r = newnode;
+	}
+	return false;
+}
+
 bool Derivation::Scanner()
 {
 	int i = 0;
 	int syn;
-	derivate* p=&start;
+	derivate* p = &start;
 	derivate* q = &start;
 	derivate* r = &start;
 	std::string code = lexcode;
@@ -347,6 +408,8 @@ bool Derivation::Scanner()
 		while (code[i] == ' ') {
 			i++;
 		}
+
+
 		if (lexobject.is_alpha(code[i]) || code[i] == '_') {
 			token.push_back(code[i]);
 			i++;
@@ -356,66 +419,46 @@ bool Derivation::Scanner()
 				i++;
 			}
 			i--;
-			if (token == "start") {
-				derivate* newnode = &start;
-				newnode->setNAME(token);
-				newnode->addbrother(nullptr);
-				newnode->addson(nullptr);
-				i += 2;
-				continue;
-			}
-
-			else if (i < code.length() - 2) {
-				if (code[i + 1] == ':' && code[i + 2] == '\n') {
-
-					derivate* newnode = (derivate*)malloc(sizeof(derivate));
-					newnode->setNAME(token);
-					newnode->addbrother(nullptr);
-					newnode->addson(nullptr);
-					p->addbrother(newnode);
-				}
-			}
-			else if (code[i + 1] == '\n') {
-				derivate* newnode = (derivate*)malloc(sizeof(derivate));
-				newnode->setNAME(token);
-				newnode->addbrother(nullptr);
-				newnode->addson(nullptr);
-				q->addbrother(newnode);
-				r = q;
-
-			}
-			else if (p=q){
-				derivate* newnode = (derivate*)malloc(sizeof(derivate));
-				newnode->setNAME(token);
-				newnode->addbrother(nullptr);
-				newnode->addson(nullptr);
-				p->addson(newnode);
-				q = newnode;
-				r = q;
-			}
-			else if (q=r)
+			createderivation(token, code, i, p, q, r);
+			token.clear();
+		}
+		else if (is_symbol(code[i])) {
+			token.push_back(code[i]);
+			i++;
+			while (is_symbol(code[i]))
 			{
-				derivate* newnode = (derivate*)malloc(sizeof(derivate));
-				newnode->setNAME(token);
-				newnode->addbrother(nullptr);
-				newnode->addson(nullptr);
-				q->addson(newnode);
-				r = newnode;
+				token.push_back(code[i]);
+				i++;
 			}
-			else {
-				derivate* newnode = (derivate*)malloc(sizeof(derivate));
-				newnode->setNAME(token);
-				newnode->addbrother(nullptr);
-				newnode->addson(nullptr);
-				r->addbrother(newnode);
-			}
+			i--;
+			createderivation(token, code, i, p, q, r);
+			token.clear();
 		}
 
 
-
+		i++;
 
 	}
 	return false;
+}
+
+bool Derivation::is_symbol(char s)
+{
+	std::string str="+-=*/%&()[]{}:,<>;|!~";
+	for (int i = 0; i < str.length(); i++) {
+		if (str[i] == s) 
+			return true;
+	}
+	return false;
+}
+
+std::string Derivation::visitderivate()
+{
+	std::string str = "";
+	for (derivate* i = &start; i != nullptr; i = (*i).brother) {
+		str += (*i).NAME + '\n';
+	}
+	return str;
 }
 
 bool Derivation::derivate::addbrother(derivate* s)
