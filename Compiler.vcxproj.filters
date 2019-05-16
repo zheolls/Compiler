@@ -24,6 +24,9 @@
     <ClCompile Include="lex.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Derivation.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lex.hpp">
@@ -36,6 +39,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="symboltable.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Derivation.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

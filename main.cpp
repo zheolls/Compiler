@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdlib.h>
 #include "symboltable.hpp"
+#include "Derivation.hpp"
 int a=1;
 
 //从文件读入到string里
@@ -30,8 +31,9 @@ int main() {
 	std::string str = readFileIntoString(fn2);
 	Derivation derivate= Derivation(str);
 	derivate.Scanner();
-	std::cout<<derivate.visitderivate();
-
+	//std::cout<<derivate.visitderivate();
+	derivate.Geneactiontable();
+	derivate.printstate();
 	std::cin >> scode;
 	/*lex lex(scode);
 	std::string s;

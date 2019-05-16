@@ -123,12 +123,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Derivation.cpp" />
     <ClCompile Include="lex.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="symboltable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.hpp" />
+    <ClInclude Include="Derivation.hpp" />
     <ClInclude Include="Error.hpp" />
     <ClInclude Include="lex.hpp" />
     <ClInclude Include="symboltable.hpp" />
