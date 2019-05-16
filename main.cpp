@@ -30,7 +30,8 @@ int main() {
 	std::string str = readFileIntoString(fn2);
 	Derivation derivate= Derivation(str);
 	derivate.Scanner();
-	derivate.visitderivate();
+	std::cout<<derivate.visitderivate();
+
 	std::cin >> scode;
 	/*lex lex(scode);
 	std::string s;

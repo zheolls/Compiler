@@ -1,6 +1,9 @@
 #include "Config.hpp"
 #include "Error.hpp"
 #include <string>
+#include <vector>
+#include <iostream>
+
 class lex {
 private:
 	int syn;
@@ -45,23 +48,63 @@ class Derivation {
 private:
 	std::string lexcode;
 	lex lexobject;
+	std::vector<std::string> nonterminal,terminal;
 public:
 	struct derivate {
 		std::string NAME;
 		derivate* brother;
 		derivate* son;
 		derivate* next;
-		bool addbrother(derivate *s);
-		bool addson(derivate* s);
-		bool addnext(derivate* s);
-		bool setNAME(std::string s);
+		bool haveblank;
 	};
+
+	struct character
+	{
+		int left;
+		int right;
+		int pos;
+		character();
+		character(int i, int j, int k);
+	};
+	enum ACTIONTYPE
+	{
+		ACCEPT, SHIFT, REDUCE, ERROR, SYNC
+	};
+	struct SLRtabletuple {
+		Derivation::ACTIONTYPE action;
+		int state;
+		Derivation::character c;
+		SLRtabletuple();
+	};
+
+	SLRtabletuple **ACTIONTABLE;
+	SLRtabletuple** GOTOTABLE;
 	derivate start;
+	typedef std::vector<character> characterlist;
+	typedef std::vector<std::string> strlist;
+	std::vector<characterlist> statelist;
 	Derivation(std::string s);
 	void per_process();
 	derivate* createnewnode(std::string token);
-	bool createderivation(std::string token, std::string code, int& i, derivate* p, derivate* q, derivate* r);
+	bool createderivation(std::string token, std::string code, int& i, derivate** p, derivate** q, derivate** r);
 	bool Scanner();
 	bool is_symbol(char s);
+	bool is_terminal(std::string s);
 	std::string  visitderivate();
+	derivate* getcharacter(character c);
+	bool terminal_is_exist(std::string s);
+	bool closure(characterlist &I);
+	bool has_blank(strlist s);
+	bool clequal(characterlist c1, characterlist c2);
+	strlist First(strlist s);
+	strlist First(std::string s);
+	strlist Follow(std::string s);
+	strlist merge(strlist s1,strlist s2);
+	strlist merge(strlist s1, std::string s2);
+	strlist set(strlist s);
+	int GOTO(int state, std::string s);
+	int getterminalpos(std::string s);
+	int getnonterminalpos(std::string s);
+	void Genestatetable();
+	void Geneactiontable();
 };

@@ -3,6 +3,7 @@ variable_state ; start
 func_state ; start
 constant_state ; start
 customtype_state ; start
+sentence
 
 indentifer:
 variable
@@ -23,7 +24,7 @@ int
 double
 void
 bool
-long 
+long
 short
 
 type:
@@ -36,7 +37,7 @@ type * variable dimension
 
 dimension:
 [ arraylen ] dimension
-[ arraylen ]
+blank
 
 arraylen:
 integer
@@ -46,9 +47,7 @@ constant_state:
 const variable_state
 
 customtype_state:
-struct customtype {
-	start
-}
+struct customtype { start }
 
 
 
@@ -172,7 +171,7 @@ blank
 
 for_expression:
 for (for_condition ; for_condition ; for_condition) sentence
-
+		
 if_expression:
 if (expression) sentence else sentence 
 if (expression) sentence 

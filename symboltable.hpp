@@ -12,8 +12,6 @@ public:
 		LONGDOUBLE,							//16 byte
 		ARRAY, STRUCT, RETURN, SUBBLOCK				//Ãÿ ‚¿‡–Õ
 	};
-
-
 	struct symboltuple {
 		std::string NAME;
 		int TYP;
