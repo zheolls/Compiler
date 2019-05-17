@@ -1,6 +1,6 @@
-//#include <string>
 #include <vector>
-#include "Error.hpp"
+#include "lex.hpp"
+
 class symboltable {
 public:
 	enum catset { FUNC, CONS, TYPE, DOM, VAL, YF, VN };
@@ -17,37 +17,35 @@ public:
 		int TYP;
 		catset CAT;
 		void* ADDR;
-		symboltuple(std::string name, int typ, catset cat, void* addr);
 		symboltuple();
 	};
 	struct ExToken {
 		std::string NAME;
 		catset CAT;
 		typeset TVAL;
-		std::string TYPEN;
-		std::string CONS;
-		int UP;
-		int CTP;
-		int CLEN;
+		std::string constomtype;
+		void* ADDR;
+		void* TYPE;
 		void* VALUE;
+		int CTP;
+		std::vector<int> UP;
+		
 	};
 	struct typeltuple {
 		typeset TVAL;
-		int TPOINT;
-		typeltuple(typeset tval, int ptr) {
-			TVAL = tval; TPOINT = ptr;
-		}
-
+		void* TPOINT;
+		typeltuple(typeset tval, void* ptr);
+		typeltuple(typeset t);
+		typeltuple();
 	};
 	struct ainfltuple {
-		int LOW;
-		int UP;
-		int CTP;
+		void* TYPE;
+		void* ADDR;
 		int CLEN;
-		ainfltuple(int low, int up, int ctp, int clen) {
-			LOW = low; UP = up; CTP = ctp; CLEN = clen;
-		}
+		std::vector<int> UP;
+		ainfltuple();
 	};
+	typedef std::vector<ainfltuple> _AINFL;
 	struct finaltuple
 	{
 		int FN;
@@ -55,46 +53,26 @@ public:
 		void* ENT;
 
 	};
-	struct _TYPEL {
-		_TYPEL* prev;
-		std::vector<typeltuple> TABLE;
-		bool put(typeltuple t);
-		void clear();
-	};
+	typedef std::vector<typeltuple> _TYPEL;
+	typedef std::vector<std::string> _CONSL;
 	struct _SYNBL {
 		_SYNBL* prev;
 		_SYNBL* nextp;
-		symboltable::_TYPEL* tl;
+		_TYPEL* tl;
+		_CONSL* cl;
+		_AINFL* al;
+		int CLEN;
 		std::vector<symboltuple> TABLE;
-		bool put(ExToken t);
 		_SYNBL();
-		_SYNBL(_SYNBL* p);
-		symboltuple get(std::string s);
-
 	};
-	const int a[1] = { 0 };
-	typedef std::vector<std::string> _CONSL;
 	typedef std::vector<int> _LENL;
-	typedef std::vector<_SYNBL> _STRUL, _SYNL;
-	typedef std::vector<ainfltuple> _AINFL;
 	typedef std::vector<finaltuple> _FINAL;
-	_CONSL consl;
-	_FINAL final;
-	_AINFL ainfl;
-	_LENL lenl;
-	_STRUL strul;
-	_SYNL synbl;
-	_TYPEL typel;
-	bool is_existed(_SYNBL p, ExToken a);
-	void inital(_TYPEL& q);
+	_SYNBL synbl;
+	_SYNBL* pp;
+	bool initialTYPEL();
 	//创建符号表
-	//p指向当前表，a为Token序列，pos为序列扫描指针
-	bool Generate_symbol_table(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos, int& length);
-	int Generate_type_table(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos, int& length);
-	int GetTypeAddr(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos);
-	int GetTypeLength(_SYNBL& p, _TYPEL& q, std::vector<ExToken> a, int& pos);
-	bool Scanner() {
-
-
-	}
+	bool Scanner(lex::Token& token);
+	bool SetType(_SYNBL& p, ExToken& a);
+	int GetTypeLength(_SYNBL& p, void* addr);
+	symboltable();
 };

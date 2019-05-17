@@ -1,3 +1,4 @@
+#pragma once
 #include "Config.hpp"
 #include "Error.hpp"
 
@@ -13,6 +14,7 @@ public:
 		std::string val;
 		std::string typeset;
 		std::string attr;
+		void* addr;
 		int syn;
 	}token;
 	lex(std::string s);

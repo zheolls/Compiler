@@ -17,4 +17,10 @@ namespace Error {
 		const std::string unique_identifer = "标识符重复定义";
 		const std::string type_errot = "类型未定义";
 	}
+	namespace typeError {
+		const std::string havenotype = "没有对应的类型";
+	}
+	namespace SyntexError {
+		const std::string syntexerror = "语法错误";
+	}
 }

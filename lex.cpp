@@ -6,6 +6,7 @@ lex::lex(std::string s)
 	codeLength = sourceCode.length();
 	syn = -1;
 	ptr = 0;
+	per_process();
 }
 
 lex::lex()
@@ -57,7 +58,7 @@ bool lex::is_single_operater(char s)
 bool lex::is_delimiter(char s)
 {
 	std::string temp = ";()\"\'[]{}\\\?:#,";
-	for (int i = 0; i < temp.length(); i++) {
+	for (int i = 0; i < (int)temp.length(); i++) {
 		if (s == temp[i]) {
 			return true;
 		}
@@ -320,4 +321,3 @@ bool lex::Scanner()
 	ptr = i;
 	return true;
 }
-

@@ -1,0 +1,49 @@
+start:
+D S
+
+D:
+type id ; D
+blank
+
+type:
+int
+float
+
+S:
+id = E; S2
+if (C) S S2
+if (C)  S else S S2
+while (C)  S S2
+
+S2:
+;S S2
+blank
+
+C:
+E C2
+
+C2:
+> E
+< E
+== E
+
+E2:
++ T E2
+¨C T E2
+blank
+
+E:
+T E2
+
+T:
+F T2
+
+T2:
+* F T2
+/ F T2
+blank
+
+F:
+( E )
+id
+int10

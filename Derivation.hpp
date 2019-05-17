@@ -1,6 +1,6 @@
-#include "Config.hpp"
-#include <vector>
-#include <iostream>
+#include "lex.hpp"
+#include<vector>
+#include<iostream>
 class Derivation {
 private:
 	enum ACTIONTYPE
@@ -12,7 +12,6 @@ private:
 		derivate* brother;
 		derivate* son;
 		derivate* next;
-		bool haveblank;
 		derivate();
 	};
 	struct character
@@ -31,17 +30,20 @@ private:
 	};
 	SLRtabletuple** ACTIONTABLE;
 	SLRtabletuple** GOTOTABLE;
+	bool **firstset;
+	bool** followset;
+	std::vector<bool> blankset;
 	typedef std::vector<character> characterlist;
 	typedef std::vector<std::string> strlist;
 	std::vector<std::string> nonterminal, terminal;
 	std::vector<characterlist> statelist;
 	std::string lexcode;
-	//lex lexobject;
 	derivate start;
 	derivate* getcharacter(character c);
 	derivate* createnewnode(std::string token);
 	strlist First(strlist s);
 	strlist First(std::string s);
+	strlist First(derivate* p);
 	strlist Follow(std::string s);
 	strlist merge(strlist s1, strlist s2);
 	strlist merge(strlist s1, std::string s2);
@@ -67,5 +69,7 @@ public:
 	bool Scanner();
 	void Geneactiontable();
 	void printstate();
-	void LR();
+	bool LR(lex &lexobject);
+	bool LR(strlist sl);
+	void loadtokeblist(lex &lexobject);
 };

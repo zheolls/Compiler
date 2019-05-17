@@ -149,12 +149,11 @@ expression_1 ++
 - expression_1
 
 expression_1:
-expression1 . expression
-expression1 -> expression
+expression_1 . expression
+expression_1 -> expression
 (expression)
 expression_1 [ expression ]
 e
-variable_state
 
 while_expression:
 while ( expression ) sentence

@@ -27,9 +27,6 @@ Derivation::derivate* Derivation::createnewnode(std::string token)
 
 bool Derivation::createderivation(std::string token, std::string code, int& i, derivate** p, derivate** q, derivate** r)
 {
-	if (token == "blank") {
-		(*p)->haveblank = true;
-	}
 	if (token == "start") {
 		if (code[i + 1] == ':' && code[i + 2] == '\n') {
 			derivate* newnode = &start;
@@ -113,7 +110,6 @@ bool Derivation::createderivation(std::string token, std::string code, int& i, d
 bool Derivation::Scanner()
 {
 	int i = 0;
-	int syn;
 	derivate* p = &start;
 	derivate* q = &start;
 	derivate* r = &start;
@@ -154,6 +150,145 @@ bool Derivation::Scanner()
 		i++;
 
 	}
+	strlist sl;
+	for (int i = 0; i < terminal.size(); i++) {
+		int flag = true;
+		for (int j = 0; j < nonterminal.size(); j++) {
+			if (nonterminal[j] == terminal[i]) {
+				flag = false;
+				break;
+			}
+		}
+		if (flag)
+			sl.push_back(terminal[i]);
+	}
+	terminal = sl;
+	firstset = new bool* [nonterminal.size()];
+	followset = new bool* [nonterminal.size()];
+	for (int i = 0; i < nonterminal.size(); i++) {
+		firstset[i] = new bool[terminal.size()];
+		followset[i] = new bool[terminal.size()];
+		for (int j = 0; j < terminal.size(); j++) {
+			firstset[i][j] =false;
+			followset[i][j] = false;
+		}
+		blankset.push_back(false);
+	}
+	//BLANKTABLE
+	while (true) {
+		bool flag = false;
+		for (derivate* p = &start; p != nullptr; p = p->brother)
+			for (derivate* q = p->son; q != nullptr; q = q->brother) {
+				bool temp=false;
+				if (is_terminal(q->NAME)) {
+					continue;
+				} 
+				else if (q->NAME == "blank") {
+					if (!blankset[getnonterminalpos(p->NAME)])
+						flag = true;
+					blankset[getnonterminalpos(p->NAME)]=true;
+				}
+				else {
+					temp = blankset[getnonterminalpos(q->NAME)];
+					for (derivate* r = q; r != nullptr; r = r->next) {
+						if (is_terminal(r->NAME))
+						{
+							break;
+						}
+						else
+						{
+							temp = blankset[getnonterminalpos(r->NAME)] && temp;
+						}
+					}
+					if (!blankset[getnonterminalpos(p->NAME)] && temp) {
+						blankset[getnonterminalpos(p->NAME)] = true;
+						flag = true;
+					}
+				}
+			}
+		if (!flag) {
+			break;
+		}
+	}
+	//FIRSTSET
+	while (true) {
+		bool flag = false;
+		for (derivate* p = &start; p != nullptr; p = p->brother)
+			for (derivate* q = p->son; q != nullptr; q = q->brother) {
+				if (is_terminal(q->NAME)) {
+					if (!followset[getnonterminalpos(p->NAME)][getterminalpos(q->NAME)])
+					{
+						followset[getnonterminalpos(p->NAME)][getterminalpos(q->NAME)] = true;
+						flag = true;
+						continue;
+					}
+				}
+				else if (q->NAME == "blank") {
+					continue;
+				}
+				else {
+					for (derivate* r = q; r != nullptr; r = r->next) {
+						if (is_terminal(r->NAME))
+						{
+							if (!followset[getnonterminalpos(p->NAME)][getterminalpos(r->NAME)])
+								followset[getnonterminalpos(p->NAME)][getterminalpos(r->NAME)] = true;
+
+							break;
+						}
+						else
+						{
+							for (int i = 0; i < terminal.size(); i++) {
+								if (!followset[getnonterminalpos(p->NAME)][i] &&followset[getnonterminalpos(r->NAME)][i]) {
+									followset[getnonterminalpos(p->NAME)][i] = true;
+									flag = true;
+								}
+							}
+							if (!blankset[getnonterminalpos(r->NAME)]) {
+								break;
+							}
+						}
+							
+					}
+				}
+			}
+		if (!flag) {
+			break;
+		}
+	}
+	//FOLLOWSET
+	followset[getnonterminalpos("start")][getterminalpos("$")] = true;
+	while (true) {
+		bool flag = false;
+		for (derivate* p = &start; p != nullptr; p = p->brother)
+			for (derivate* q = p->son; q != nullptr; q = q->brother)
+				for (derivate* r = q; r != nullptr; r = r->next) {
+					if (is_terminal(r->NAME) || r->NAME == "blank") {
+						continue;
+					}
+					else if (r->next == nullptr || has_blank(First(r->next))) {
+						for (int i = 0; i < terminal.size(); i++) {
+							if (followset[getnonterminalpos(p->NAME)][i] && !followset[getnonterminalpos(r->NAME)][i]) {
+								followset[getnonterminalpos(r->NAME)][i] = true;
+								flag = true;
+							}
+						}
+					}
+					else {
+						strlist s3 = First(r->next);
+						for (int i = 0; i < s3.size(); i++) {
+							if (!followset[getnonterminalpos(r->NAME)][getterminalpos(s3[i])]) {
+								followset[getnonterminalpos(r->NAME)][getterminalpos(s3[i])] = true;
+								flag = true;
+							}
+						}
+					}
+
+				}
+		if (!flag) {
+			break;
+		}
+	}
+
 	return false;
 }
 
@@ -310,62 +445,36 @@ bool Derivation::clequal(characterlist c1, characterlist c2)
 
 Derivation::strlist Derivation::First(strlist s)
 {
-	strlist s2, s3, temp, temp2;
-	bool flag = false;
-	while (s.size() > 0) {
-		flag = false;
-		std::string ss = s[s.size() - 1];
-		s.pop_back();
-		if (is_terminal(ss) || ss == "blank") {
-			s2.push_back(ss);
-			return s2;
+	strlist s2;
+	
+	bool flag = true;
+	for (int i = 0; i < s.size(); i++) {
+		if (is_terminal(s[i]))
+		{
+			s2 = merge(s2, s[i]);
+			flag = false;
+			break;
 		}
-		else {
-			Derivation::derivate* p = &start;
-			while (true && p != nullptr) {
-				if (p->NAME == ss) {
-					p = p->son;
-					while (p != nullptr) {
-						derivate* q = p;
-						while (q != nullptr) {
-							temp.push_back(q->NAME);
-							q = q->next;
-						}
-						while (temp.size()) {
-							temp2.push_back(temp[temp.size() - 1]);
-							temp.pop_back();
-						}
-						s3 = First(temp2);
-						temp2.clear();
-						for (int i = 0; i < s3.size(); i++) {
-							if (s3[i] == "blank")
-								flag = true;
-							else
-							{
-								temp2.push_back(s3[i]);
-							}
-						}
-						p = p->brother;
-					}
-
-					break;
-				}
-				p = p->brother;
-			}
-			if (!flag)
+		else
+		{
+			for (int j = 0; j < terminal.size(); j++)
 			{
-				s2 = merge(s2, temp2);
-				return s2;
+				if (firstset[getnonterminalpos(s[i])][j])
+				{
+					s2 = merge(s2, terminal[j]);
+				}
+				
 			}
-			else {
-				s2 = merge(s2, temp2);
-			}
+			if (!blankset[getnonterminalpos(s[i])])
+				flag = false;
 		}
+		
 	}
 	if (flag) {
-		s2.push_back("blank");
+		s2 = merge(s2, "blank");
 	}
-	return strlist();
+
+	return set(s2);
 }
 
 Derivation::strlist Derivation::First(std::string s)
@@ -375,28 +484,29 @@ Derivation::strlist Derivation::First(std::string s)
 	return First(s2);
 }
 
+Derivation::strlist Derivation::First(derivate *p)
+{
+	strlist s2;
+	for (p ; p != nullptr; p = p->next) {
+		s2.push_back(p->NAME);
+	}
+	return First(s2);
+}
+
 Derivation::strlist Derivation::Follow(std::string s)
 {
 	strlist s2;
-	if (s == "start") {
-		s2 = merge(s2, "$");
+	if (is_terminal(s)) {
+		return strlist();
 	}
-	for (derivate* p = &start; p != nullptr; p = p->brother)
-		for (derivate* q = p->son; q != nullptr; q = q->brother)
-			for (derivate* r = q; r != nullptr; r = r->brother) {
-				if (r->NAME == s) {
-					if (r->next == nullptr || (r->next != nullptr && has_blank(First(r->next->NAME))))
-						s2 = merge(s2, Follow(p->NAME));
-					else if (is_terminal(r->next->NAME))
-					{
-						s2 = merge(s2, r->next->NAME);
-					}
-					else
-					{
-						s2 = merge(s2, Follow(r->next->NAME));
-					}
-				}
+	else
+	{
+		for (int i = 0; i < terminal.size(); i++) {
+			if (followset[getnonterminalpos(s)][i]) {
+				s2.push_back(terminal[i]);
 			}
+		}
+	}
 	return s2;
 }
 
@@ -414,7 +524,7 @@ Derivation::strlist Derivation::merge(strlist s1, strlist s2)
 		}
 		s1.push_back(s2[i]);
 	}
-	return s1;
+	return set(s1);
 }
 
 Derivation::strlist Derivation::merge(strlist s1, std::string s2)
@@ -571,13 +681,14 @@ void Derivation::Genestatetable()
 				int num = statelist[i][j].left;
 				if (num == 0) {
 					ACTIONTABLE[i][getterminalpos("$")].action = ACCEPT;
+					continue;
 				}
-				continue;
-				while (num > 0) {
+				p = &start;
+				while (num > 1) {
 					p = p->brother;
-					sl = Follow(p->NAME);
 					num--;
 				}
+				sl = Follow(p->NAME);
 				for (int k = 0; k < sl.size(); k++) {
 					ACTIONTABLE[i][getterminalpos(sl[k])].action = REDUCE;
 					ACTIONTABLE[i][getterminalpos(sl[k])].c = statelist[i][j];
@@ -610,13 +721,52 @@ void Derivation::printstate()
 	}
 }
 
-void Derivation::LR()
+bool Derivation::LR(strlist sl)
+{
+
+	std::string a = sl[0];
+	int i = 0;
+	std::vector<int> statestack;
+	statestack.push_back(0);
+	while (true) {
+		i++;
+		
+		int s = statestack[statestack.size() - 1];
+		SLRtabletuple slr = ACTIONTABLE[s][getterminalpos(a)];
+		if (slr.action == SHIFT) {
+			statestack.push_back(slr.state);
+			a = sl[i];
+		}
+		else if (slr.action == REDUCE)
+		{
+			for (int j = 0; j < slr.c.pos; j++) {
+				statestack.pop_back();
+			}
+			s = statestack[statestack.size() - 1];
+			statestack.push_back(GOTOTABLE[s][slr.c.left].state);
+
+		}
+		else if (slr.action == ACCEPT)
+			return true;
+		else //Error
+		{
+			throw Error::SyntexError::syntexerror;
+			break;
+		}
+	}
+	return false;
+}
+
+void Derivation::loadtokeblist(lex& lexobject)
 {
 
 }
 
 Derivation::character::character()
 {
+	left = 0;
+	right = 0;
+	pos = 0;
 }
 
 Derivation::character::character(int i, int j, int k)
@@ -629,8 +779,14 @@ Derivation::character::character(int i, int j, int k)
 Derivation::SLRtabletuple::SLRtabletuple()
 {
 	action = ERROR;
+	state = 0;
 }
 
 Derivation::derivate::derivate()
 {
+	NAME = "";
+	brother = nullptr;
+	son = nullptr;
+	next = nullptr;
+
 }
