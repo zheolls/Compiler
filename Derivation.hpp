@@ -33,6 +33,7 @@ private:
 	bool **firstset;
 	bool** followset;
 	std::vector<bool> blankset;
+	bool ignore;
 	typedef std::vector<character> characterlist;
 	typedef std::vector<std::string> strlist;
 	std::vector<std::string> nonterminal, terminal;

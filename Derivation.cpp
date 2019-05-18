@@ -10,6 +10,7 @@ Derivation::Derivation(std::string s)
 	followset = nullptr;
 	GOTOTABLE = nullptr;
 	ACTIONTABLE = nullptr;
+	ignore = false;
 }
 
 void Derivation::per_process()
@@ -300,8 +301,6 @@ bool Derivation::Scanner()
 
 	return false;
 }
-
-
 
 bool Derivation::is_symbol(char s)
 {
@@ -822,6 +821,24 @@ bool Derivation::LR(lex::Token &token)
 	}
 	bool CONTINUE=true;
 	//std::cout << token.val<<" ";
+
+	//Error recovery
+	if (ignore) {
+		int pos = getlrpos(token);
+		if (pos == _CANT_FIND_TERMINAL) {
+			return false;
+		}
+		for (int i = 0; i < nonterminal.size(); i++) {
+			if (followset[i][pos]) {
+				statestack.push_back(GOTOTABLE[statestack[statestack.size() - 1]][i].state);
+				ignore = false;
+				break;
+			}
+			
+		}
+	}
+
+	//LR analysis
 	while (CONTINUE) {
 		//for (int i = 0; i < statestack.size(); i++) {
 		//	std::cout << statestack[i] << " ";
@@ -850,11 +867,31 @@ bool Derivation::LR(lex::Token &token)
 			return true;
 		else //Error
 		{
+			while (true) {
+				s = statestack[statestack.size()-1];
+				for (int i = 0; i < nonterminal.size(); i++) {
+					if (GOTOTABLE[s][i].action == SHIFT) {
+						ignore = true;
+						break;
+					}
+				}
+				if (ignore) {
+					break;
+				}
+				else
+				{
+					statestack.pop_back();
+				}
+
+			}
+
+
 			throw Error::SyntexError::syntexerror;
 		}
 	}
 	return false;
 }
+
 int Derivation::getlrpos(lex::Token token)
 {
 	std::string s = token.val;
@@ -879,10 +916,11 @@ int Derivation::getlrpos(lex::Token token)
 
 	return _CANT_FIND_TERMINAL;
 }
+
 void Derivation::loadtokeblist(lex& lexobject)
 {
 
-}
+}	  
 
 Derivation::character::character()
 {
