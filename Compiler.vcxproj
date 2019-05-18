@@ -139,7 +139,9 @@
     <None Include="lex.md" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="back.txt" />
     <Text Include="derivation.txt" />
+    <Text Include="syntex.txt" />
     <Text Include="test.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

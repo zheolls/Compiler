@@ -1,0 +1,11 @@
+start:
+start + T
+T
+
+T:
+T * F
+F
+
+F:
+(start)
+id

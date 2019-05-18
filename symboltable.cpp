@@ -60,6 +60,8 @@ bool symboltable::Scanner(lex::Token &token)
 				st.CAT = VAL;
 				st.NAME = token.val;
 				st.ADDR = nullptr;
+				p->TABLE.push_back(st);
+				token.addr = &p->TABLE[p->TABLE.size() - 1];
 				break;
 			case _NUMBER:
 				st.CAT = CONS;
@@ -67,15 +69,21 @@ bool symboltable::Scanner(lex::Token &token)
 				str = token.val;
 				p->cl->push_back(str);
 				st.ADDR = (void*)&(p->cl[p->cl->size()-1]);
+				p->TABLE.push_back(st);
+				token.addr = &p->TABLE[p->TABLE.size() - 1];
 				break;
-			case 75: {
-				_SYNBL p2;
-				pp = &p2;
-				p->nextp = &p2;
-				p2.prev = p;
+			case 74: {
+				st.NAME = "_SUB_BLOCK_";
+				st.CAT = RECORD;
+				_SYNBL * p2=new _SYNBL;
+				pp = p2;
+				p2->prev = p;
+				st.ADDR = p2;
+				p->TABLE.push_back(st);
+				token.addr = &p->TABLE[p->TABLE.size() - 1];
 				break;
 			}
-			case 76: {
+			case 75: {
 				pp = p->prev;
 
 				break;
@@ -84,8 +92,8 @@ bool symboltable::Scanner(lex::Token &token)
 			break;
 		}
 
-		p->TABLE.push_back(st);
-		token.addr = &p->TABLE[p->TABLE.size() - 1];
+		//p->TABLE.push_back(st);
+		//token.addr = &p->TABLE[p->TABLE.size() - 1];
 	}
 	else
 	{
@@ -190,6 +198,27 @@ int symboltable::GetTypeLength(_SYNBL& p, void* addr)
 symboltable::symboltable()
 {
 	pp = &synbl;
+}
+
+std::string symboltable::printsymbol(int deepth, _SYNBL *p)
+{
+	std::string str;
+	str += "deepth:" + std::to_string(deepth);
+	for (int i = 0; i < p->TABLE.size(); i++) {
+		if (p->TABLE[i].CAT == RECORD)
+			str += "   "+printsymbol(deepth + 1, (_SYNBL*)p->TABLE[i].ADDR);
+		else if (p->TABLE[i].CAT==VAL || p->TABLE[i].CAT == CONS)
+		{
+			str += "   (" + p->TABLE[i].NAME + "," + std::to_string(p->TABLE[i].CAT) +")";
+		}
+	}
+	str += "\n";
+	return str;
+}
+
+std::string symboltable::printsymbol()
+{
+	return printsymbol(0,pp);
 }
 
 symboltable::ainfltuple::ainfltuple()

@@ -30,14 +30,28 @@ int main() {
 	derivate.Scanner();
 	//std::cout<<derivate.visitderivate();
 	derivate.Geneactiontable();
-	derivate.printstate();
+	//derivate.printstate();
 	lex lex(scode);
 	std::string s;
 	symboltable st=symboltable();
-	while (lex.Scanner()) {
-		st.Scanner(lex.token);
-		tokenlist.push_back(lex.token);
+	//std::cout << lex.processedCode<<std::endl;
+	while (true) {
+		try {
+			if (!lex.Scanner()) {
+				derivate.LR(lex.token);
+				break;
+			}
+			st.Scanner(lex.token);
+			derivate.LR(lex.token);
+			//tokenlist.push_back(lex.token);
+		}
+		catch (std::string e) {
+			std::cout << "(" << lex.line << "," << lex.pos << ") " << e << std::endl;;
+		}
 	}
-	std::cin >> scode;
+
+
+	//std::cout << st.printsymbol();
+	//std::cin >> scode;
 
 }

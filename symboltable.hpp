@@ -3,7 +3,7 @@
 
 class symboltable {
 public:
-	enum catset { FUNC, CONS, TYPE, DOM, VAL, YF, VN };
+	enum catset { FUNC, CONS, TYPE, DOM, VAL, YF, VN,RECORD };
 	enum typeset {
 		VOID, BOOL, CHAR, SCHAR, USCHAR,    //1 byte
 		SHORT,								//2 byte
@@ -75,4 +75,6 @@ public:
 	bool SetType(_SYNBL& p, ExToken& a);
 	int GetTypeLength(_SYNBL& p, void* addr);
 	symboltable();
+	std::string printsymbol(int deepth,_SYNBL *p);
+	std::string printsymbol();
 };

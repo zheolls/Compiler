@@ -5,6 +5,11 @@ Derivation::Derivation(std::string s)
 	statelist.push_back(characterlist());
 	statelist[0].push_back(character(0, 0, 0));
 	terminal.push_back("$");
+	statestack.push_back(0);
+	firstset = nullptr;
+	followset = nullptr;
+	GOTOTABLE = nullptr;
+	ACTIONTABLE = nullptr;
 }
 
 void Derivation::per_process()
@@ -98,7 +103,7 @@ bool Derivation::createderivation(std::string token, std::string code, int& i, d
 		(*r)->next = newnode;
 		(*r) = newnode;
 	}
-	if (is_terminal(token) && !terminal_is_exist(token) && token != "blank") {
+	if (!terminal_is_exist(token) && token != "blank") {
 		terminal.push_back(token);
 	}
 
@@ -216,9 +221,9 @@ bool Derivation::Scanner()
 		for (derivate* p = &start; p != nullptr; p = p->brother)
 			for (derivate* q = p->son; q != nullptr; q = q->brother) {
 				if (is_terminal(q->NAME)) {
-					if (!followset[getnonterminalpos(p->NAME)][getterminalpos(q->NAME)])
+					if (!firstset[getnonterminalpos(p->NAME)][getterminalpos(q->NAME)])
 					{
-						followset[getnonterminalpos(p->NAME)][getterminalpos(q->NAME)] = true;
+						firstset[getnonterminalpos(p->NAME)][getterminalpos(q->NAME)] = true;
 						flag = true;
 						continue;
 					}
@@ -230,16 +235,16 @@ bool Derivation::Scanner()
 					for (derivate* r = q; r != nullptr; r = r->next) {
 						if (is_terminal(r->NAME))
 						{
-							if (!followset[getnonterminalpos(p->NAME)][getterminalpos(r->NAME)])
-								followset[getnonterminalpos(p->NAME)][getterminalpos(r->NAME)] = true;
+							if (!firstset[getnonterminalpos(p->NAME)][getterminalpos(r->NAME)])
+								firstset[getnonterminalpos(p->NAME)][getterminalpos(r->NAME)] = true;
 
 							break;
 						}
 						else
 						{
 							for (int i = 0; i < terminal.size(); i++) {
-								if (!followset[getnonterminalpos(p->NAME)][i] &&followset[getnonterminalpos(r->NAME)][i]) {
-									followset[getnonterminalpos(p->NAME)][i] = true;
+								if (!firstset[getnonterminalpos(p->NAME)][i] &&firstset[getnonterminalpos(r->NAME)][i]) {
+									firstset[getnonterminalpos(p->NAME)][i] = true;
 									flag = true;
 								}
 							}
@@ -255,17 +260,19 @@ bool Derivation::Scanner()
 			break;
 		}
 	}
-	//FOLLOWSET
 	followset[getnonterminalpos("start")][getterminalpos("$")] = true;
+
+	//FOLLOWSET
 	while (true) {
 		bool flag = false;
 		for (derivate* p = &start; p != nullptr; p = p->brother)
 			for (derivate* q = p->son; q != nullptr; q = q->brother)
 				for (derivate* r = q; r != nullptr; r = r->next) {
-					if (is_terminal(r->NAME) || r->NAME == "blank") {
+					bool hb = has_blank(r->next);
+					if (q->NAME == "blank" || is_terminal(r->NAME)) {
 						continue;
 					}
-					else if (r->next == nullptr || has_blank(First(r->next))) {
+					else if (hb) {
 						for (int i = 0; i < terminal.size(); i++) {
 							if (followset[getnonterminalpos(p->NAME)][i] && !followset[getnonterminalpos(r->NAME)][i]) {
 								followset[getnonterminalpos(r->NAME)][i] = true;
@@ -273,15 +280,17 @@ bool Derivation::Scanner()
 							}
 						}
 					}
-					else {
-						strlist s3 = First(r->next);
-						for (int i = 0; i < s3.size(); i++) {
-							if (!followset[getnonterminalpos(r->NAME)][getterminalpos(s3[i])]) {
-								followset[getnonterminalpos(r->NAME)][getterminalpos(s3[i])] = true;
-								flag = true;
-							}
+					strlist s3 = First(r->next);
+					for (int i = 0; i < s3.size(); i++) {
+						int a1 = getnonterminalpos(r->NAME);
+						int a2 = getterminalpos(s3[i]);
+						bool *p2= &followset[a1][a2];
+						if (!*p2) {
+							*p2 = true;
+							flag = true;
 						}
 					}
+					
 
 				}
 		if (!flag) {
@@ -291,6 +300,8 @@ bool Derivation::Scanner()
 
 	return false;
 }
+
+
 
 bool Derivation::is_symbol(char s)
 {
@@ -422,6 +433,20 @@ bool Derivation::has_blank(strlist s)
 			return true;
 	}
 	return false;
+}
+
+bool Derivation::has_blank(derivate* p)
+{
+	bool flag = true;
+	for (derivate* q = p; q != nullptr; q = q->next ) {
+		if (is_terminal(q->NAME))
+		{
+			return false;
+		}
+		else
+			flag = flag && blankset[getnonterminalpos(q->NAME)];
+	}
+	return flag;
 }
 
 bool Derivation::clequal(characterlist c1, characterlist c2)
@@ -614,15 +639,12 @@ void Derivation::Genestatetable()
 		setsize = statelist.size();
 		for (int j = 0; j < statelist[i].size(); j++) {
 			derivate* p = getcharacter(statelist[i][j]);
-			if (p != nullptr) {
+			if (p != nullptr&& p->NAME!="blank") {
 				s = merge(s, p->NAME);
 			}
 		}
 		s = set(s);
-		if (s.size() == 0) {
-			continue;
-		}
-		else
+		if (s.size() > 0) 
 		{
 			for (int j = 0; j < s.size(); j++) {
 				characterlist cl;
@@ -646,8 +668,8 @@ void Derivation::Genestatetable()
 						}
 						else
 						{
-							GOTOTABLE[i][getterminalpos(s[j])].action = SHIFT;
-							GOTOTABLE[i][getterminalpos(s[j])].state = k;
+							GOTOTABLE[i][getnonterminalpos(s[j])].action = SHIFT;
+							GOTOTABLE[i][getnonterminalpos(s[j])].state = k;
 						}
 						flag = false;
 						break;
@@ -672,10 +694,10 @@ void Derivation::Genestatetable()
 			}
 
 		}
-
 		//REDUCE
 		for (int j = 0; j < statelist[i].size(); j++) {
-			derivate* p = getcharacter(statelist[i][j]);
+			character c = statelist[i][j];
+			derivate* p = getcharacter(c);
 			strlist sl;
 			if (p == nullptr) {
 				int num = statelist[i][j].left;
@@ -683,16 +705,25 @@ void Derivation::Genestatetable()
 					ACTIONTABLE[i][getterminalpos("$")].action = ACCEPT;
 					continue;
 				}
-				p = &start;
-				while (num > 1) {
-					p = p->brother;
-					num--;
+				c.pos--;
+				int flag = false;
+				if (getcharacter(c)->NAME == "blank") {
+					statelist[i][j].pos--;
+					flag = true;
 				}
-				sl = Follow(p->NAME);
+				c.pos++;
+				sl = Follow(nonterminal[c.left-1]);
 				for (int k = 0; k < sl.size(); k++) {
+					if (sl[k] == "else" && (nonterminal[c.left-1]== "G" ||
+						getcharacter(character(c.left, c.right, 0))->NAME == "if"))
+						continue;
 					ACTIONTABLE[i][getterminalpos(sl[k])].action = REDUCE;
 					ACTIONTABLE[i][getterminalpos(sl[k])].c = statelist[i][j];
 				}
+				if (flag){
+					statelist[i][j].pos++;
+				}
+
 			}
 		}
 	}
@@ -719,23 +750,93 @@ void Derivation::printstate()
 		}
 		std::cout << std::endl;
 	}
+
+	for (int i = 0; i < terminal.size(); i++) {
+		std::cout << terminal[i] << "  ";
+	}
+	std::cout << std::endl;
+	for (int i = 0; i < nonterminal.size(); i++) {
+		std::cout << nonterminal[i] << "  ";
+	}
+	std::cout << std::endl;
+
+	for (int i = 0; i < statelist.size(); i++) {
+		std::cout << "state:" << i<<" ";
+		for (int j = 0; j < terminal.size(); j++) {
+			if (ACTIONTABLE[i][j].action == SHIFT) {
+				std::cout << "S";
+				std::cout << ACTIONTABLE[i][j].state << " ";
+
+			}
+			else if (ACTIONTABLE[i][j].action == REDUCE) {
+				std::cout << "R";
+				std::cout << ACTIONTABLE[i][j].c.left<<","<< ACTIONTABLE[i][j].c.right << " ";
+			}
+			else if (ACTIONTABLE[i][j].action == ACCEPT) {
+				std ::cout << "ACC";
+			}
+			else
+			{
+				std::cout << "E ";
+			}
+		}
+		std::cout << "GOTO  ";
+		for (int j = 0; j < nonterminal.size(); j++) {
+			std::cout << GOTOTABLE[i][j].state << " ";
+		}
+		std::cout << std::endl;
+	}
+
+	for (int i = 0; i < nonterminal.size(); i++) {
+		std::cout << nonterminal[i] << ": ";
+		for (int j = 0; j < terminal.size(); j++) {
+			std::cout << followset[i][j]<< " ";
+		}
+		std::cout << std::endl;
+	}
+	for (int i = 0; i < nonterminal.size(); i++) {
+		std::cout << nonterminal[i] << ": ";
+		for (int j = 0; j < terminal.size(); j++) {
+			std::cout << firstset[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+	for (int i = 0; i < nonterminal.size(); i++) {
+		std::cout << nonterminal[i] << ": ";
+		std::cout << blankset[i] << std::endl;
+	}
+	//for (int i = 0; i < statelist.size(); i++) {
+	//	std::cout << nonterminal[i] << ": ";
+	//	for (int j = 0; j < nonterminal.size(); j++) {
+	//		std::cout << GOTOTABLE[i][j].state << " ";
+	//	}
+	//	std::cout << std::endl;
+	
 }
 
-bool Derivation::LR(strlist sl)
+bool Derivation::LR(lex::Token &token)
 {
+	if (token.addr == nullptr&& (token.syn==99 || token.syn==100)) {
 
-	std::string a = sl[0];
-	int i = 0;
-	std::vector<int> statestack;
-	statestack.push_back(0);
-	while (true) {
-		i++;
-		
+		throw Error::stateError::identifer_not_defined;
+	}
+	bool CONTINUE=true;
+	//std::cout << token.val<<" ";
+	while (CONTINUE) {
+		//for (int i = 0; i < statestack.size(); i++) {
+		//	std::cout << statestack[i] << " ";
+		//}
+		//std::cout << std::endl;
+		std::string a = token.val;
+		int pos = getlrpos(token);
+		if (pos == _CANT_FIND_TERMINAL) {
+			throw Error::SyntexError::syntexerror_1;
+		}
 		int s = statestack[statestack.size() - 1];
-		SLRtabletuple slr = ACTIONTABLE[s][getterminalpos(a)];
+		SLRtabletuple slr = ACTIONTABLE[s][getlrpos(token)];
 		if (slr.action == SHIFT) {
 			statestack.push_back(slr.state);
-			a = sl[i];
+			CONTINUE = false;
 		}
 		else if (slr.action == REDUCE)
 		{
@@ -743,20 +844,41 @@ bool Derivation::LR(strlist sl)
 				statestack.pop_back();
 			}
 			s = statestack[statestack.size() - 1];
-			statestack.push_back(GOTOTABLE[s][slr.c.left].state);
-
+			statestack.push_back(GOTOTABLE[s][slr.c.left - 1].state);
 		}
 		else if (slr.action == ACCEPT)
 			return true;
 		else //Error
 		{
 			throw Error::SyntexError::syntexerror;
-			break;
 		}
 	}
 	return false;
 }
+int Derivation::getlrpos(lex::Token token)
+{
+	std::string s = token.val;
+	if (token.syn == _IDENTIFIER) {
+		return getterminalpos("id");
+	}
+	else if (token.syn == _NUMBER)
+	{
+		return getterminalpos("int10");
+	}
+	else if (token.syn == _SCANNER_FINISHED) {
+		return getterminalpos("$");
+	}
+	else
+	{
+		for (int i = 0; i < terminal.size(); i++) {
+			if (s == terminal[i]) {
+				return i;
+			}
+		}
+	}
 
+	return _CANT_FIND_TERMINAL;
+}
 void Derivation::loadtokeblist(lex& lexobject)
 {
 

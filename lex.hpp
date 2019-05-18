@@ -7,7 +7,10 @@ private:
 	int syn;
 	int ptr;
 	int codeLength;
+
 public:
+	int line;
+	int pos;
 	std::string sourceCode;
 	std::string processedCode;
 	struct Token : std::string {
@@ -23,9 +26,9 @@ public:
 		"auto", "break", "case", "char", "const", "continue",
 		"default", "do", "double", "else", "enum", "extern",
 		"float", "for", "goto", "if","include", "int", "long","namesapce",
-		"register", "return", "short", "signed", "sizeof", "static",
+		"false", "return", "short", "signed", "sizeof", "static",
 		"struct", "switch", "typedef", "union", "unsigned","using", "void",
-		"volatile", "while"
+		"true", "while"
 	};
 	const std::string operatorWord[_OPERATOR_NUM] = {
 	   "+","++","+=","-","--","-=","->","*","*=","/","/=","<","<=","<<",">",">=",">>","=","==","!",
@@ -40,6 +43,7 @@ public:
 	bool is_digit(char s);
 	bool is_single_operater(char s);
 	bool is_delimiter(char s);
+	bool is_legal(char s);
 	void per_process();
 	bool Scanner();
 };

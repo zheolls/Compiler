@@ -53,6 +53,7 @@ private:
 	bool terminal_is_exist(std::string s);
 	bool closure(characterlist& I);
 	bool has_blank(strlist s);
+	bool has_blank(derivate* p);
 	bool clequal(characterlist c1, characterlist c2);
 	bool character_is_existed(characterlist cl, character c);
 	bool is_symbol(char s);
@@ -61,15 +62,18 @@ private:
 	int GOTO(int state, std::string s);
 	int getterminalpos(std::string s);
 	int getnonterminalpos(std::string s);
+	std::vector<int> statestack;
+
+
 	void Genestatetable();
 public:
 	Derivation(std::string s);
 	void per_process();
 	std::string  visitderivate();
 	bool Scanner();
+	int  getlrpos(lex::Token token);
 	void Geneactiontable();
 	void printstate();
-	bool LR(lex &lexobject);
-	bool LR(strlist sl);
+	bool LR(lex::Token& token);
 	void loadtokeblist(lex &lexobject);
 };

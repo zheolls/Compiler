@@ -3,7 +3,16 @@ int b;
 int c;
 a=2;
 b=1;
+asd2da;  @ddsf=3;
 if (a>b)
 	c=a+b;
 else
-	c=a-b;
+	{
+		abc=5;
+	}
+c=a-b;
+while(true){
+	if(a>b){
+		f=0;
+	}
+}
