@@ -18,6 +18,7 @@ public:
 		std::string typeset;
 		std::string attr;
 		void* addr;
+		void* TYPE;
 		int syn;
 	}token;
 	lex(std::string s);

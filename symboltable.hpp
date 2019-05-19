@@ -22,12 +22,13 @@ public:
 	struct ExToken {
 		std::string NAME;
 		catset CAT;
-		typeset TVAL;
+		typeset TVAL,ARRTVAL;
 		std::string constomtype;
 		void* ADDR;
 		void* TYPE;
 		void* VALUE;
 		int CTP;
+		int width;
 		std::vector<int> UP;
 		
 	};
@@ -70,11 +71,15 @@ public:
 	_SYNBL synbl;
 	_SYNBL* pp;
 	bool initialTYPEL();
+	bool Scanner(ExToken& token);
 	//´´½¨·ûºÅ±í
 	bool Scanner(lex::Token& token);
+	bool SetType(ExToken& a);
 	bool SetType(_SYNBL& p, ExToken& a);
 	int GetTypeLength(_SYNBL& p, void* addr);
 	symboltable();
+	std::string get(void* addr);
+	std::string get(std::string s);
 	std::string printsymbol(int deepth,_SYNBL *p);
 	std::string printsymbol();
 };

@@ -41,7 +41,6 @@ int main() {
 				derivate.LR(lex.token);
 				break;
 			}
-			st.Scanner(lex.token);
 			derivate.LR(lex.token);
 			//tokenlist.push_back(lex.token);
 		}

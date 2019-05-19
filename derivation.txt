@@ -1,44 +1,68 @@
 start:
-D S
+P S
+
+P:
+M1_0 D
+
 
 D:
-type id ; D
+type id ; M2_0 D
 blank
 
 type:
-int
-float
-bool
+B M3_0 array M3_1
+
+
+B:
+int  M4_0
+float M4_1
+bool M4_2
+
+array:
+[ int10 ] array M5_0
+M5_1
+
+
+
 
 S:
-id = E;
-if (C) S G
-while (C)  S
+id = E; M6_0
+if (C) M6_1 S G M6_2
+while M6_3 (C) M6_4 S M6_5
+S M6_6 S M6_7
 { S }
-S S
 
 G:
-else S
+M7_0 else M7_1 S M7_2
 blank
 
+
 C:
-E > E
-E < E
-E == E
-true
-false
+E || M8_0 E M8_1
+E && M8_2 E M8_3
+! E M8_4
+E rel E M8_5
+true M8_6
+false M8_7
 
 E:
 T
-E + T
-E - T
+E + T M9_1
+E - T M9_2
+- E M9_3
 
 T:
 F
-T * F
-T / F
+T * F M10_1
+T / F M10_2
 
 F:
-( E )
+( E ) M11_0
 id
 int10
+
+rel:
+<
+>
+==
+!=

@@ -103,25 +103,26 @@ bool symboltable::Scanner(lex::Token &token)
 	return true;
 }
 
-bool symboltable::SetType(_SYNBL& p, ExToken& a)
+bool symboltable::SetType(ExToken& a)
 {
-	int size = p.tl->size();
+	_SYNBL* p = pp;
+	int size = p->tl->size();
 	switch (a.TVAL)
 	{
 	case symboltable::ARRAY: {
 		ainfltuple alt;
 		alt.UP = a.UP;
-		if (a.TVAL <= LONGDOUBLE) {
-			alt.TYPE = &p.tl->at(LONGDOUBLE);
+		if (a.ARRTVAL <= LONGDOUBLE) {
+			alt.TYPE = &p->tl->at(LONGDOUBLE);
 		}
-		else if (a.TVAL == STRUCT) {
+		else if (a.ARRTVAL == STRUCT) {
 			bool flag = false;
 			for (int i = typeset::LONGDOUBLE; i < size; i++) {
-				if (p.tl->at(i).TVAL == STRUCT)
+				if (p->tl->at(i).TVAL == STRUCT)
 				{
-					if (((symboltuple*)(p.tl->at(i).TPOINT))->NAME == a.constomtype) {
+					if (((symboltuple*)(p->tl->at(i).TPOINT))->NAME == a.constomtype) {
 						flag = true;
-						alt.TYPE = &p.tl->at(i);
+						alt.TYPE = &p->tl->at(i);
 						break;
 					}
 				}
@@ -130,19 +131,20 @@ bool symboltable::SetType(_SYNBL& p, ExToken& a)
 				throw Error::typeError::havenotype;
 			}
 		}
-		p.tl->push_back(typeltuple(ARRAY, &p.al[p.al->size()]));
-		p.al->push_back(alt);
-		((symboltuple*)(a.ADDR))->ADDR = &p.al[p.al->size() - 1];
+		alt.CLEN = a.width;
+		p->tl->push_back(typeltuple(ARRAY, &p->al[p->al->size()]));
+		p->al->push_back(alt);
+		((symboltuple*)(a.ADDR))->ADDR = &p->al[p->al->size() - 1];
 		break; 
 	}
 	case symboltable::STRUCT: {
 		bool flag = false;
 		for (int i = 14; i < size; i++) {
-			if (p.tl->at(i).TVAL == STRUCT)
+			if (p->tl->at(i).TVAL == STRUCT)
 			{
-				if (((symboltuple*)(p.tl->at(i).TPOINT))->NAME == a.constomtype) {
+				if (((symboltuple*)(p->tl->at(i).TPOINT))->NAME == a.constomtype) {
 					flag = true;
-					a.TYPE = &p.tl[i];
+					a.TYPE = &p->tl[i];
 					break;
 				}
 			}
@@ -157,7 +159,7 @@ bool symboltable::SetType(_SYNBL& p, ExToken& a)
 	case symboltable::SUBBLOCK:
 		break;
 	default:
-		a.TYPE = & p.tl[a.TVAL];
+		a.TYPE = & p->tl[a.TVAL];
 		break;
 	}
 	return true;
@@ -198,6 +200,18 @@ int symboltable::GetTypeLength(_SYNBL& p, void* addr)
 symboltable::symboltable()
 {
 	pp = &synbl;
+}
+
+std::string symboltable::get(void * addr)
+{
+	if (((symboltuple*)addr)->CAT==VAL) {
+		return ((symboltuple*)addr)->NAME;
+	}
+	else if (((symboltuple*)addr)->CAT == VAL)
+	{
+		return std::to_string(*(int*)((symboltuple*)addr)->ADDR);
+	}
+	throw Error::SyntexError::syntexerror;
 }
 
 std::string symboltable::printsymbol(int deepth, _SYNBL *p)

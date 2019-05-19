@@ -1,4 +1,5 @@
 #include "lex.hpp"
+#include "symboltable.hpp"
 #include<vector>
 #include<iostream>
 class Derivation {
@@ -28,6 +29,35 @@ private:
 		Derivation::character c;
 		SLRtabletuple();
 	};
+	typedef std::vector<int> leballist;
+
+	struct INSTR
+	{
+		std::string left;
+		int right;
+		INSTR(std::string a, int b);
+	};
+	std::vector<INSTR> instrlist;
+	union VAL
+	{
+		int intval;
+		float fval;
+		double dval;
+		bool bval;
+	};
+	struct attribute {
+		std::string NAME; // word 
+		int state;  //state
+		int type; //Type
+		int width;  //Varible Length
+		int offset;
+		int instr;
+		leballist nextlist,truelist,falselist;
+		void* addr;
+		VAL value;
+		attribute();
+	};
+	std::vector<attribute> statestack;
 	SLRtabletuple** ACTIONTABLE;
 	SLRtabletuple** GOTOTABLE;
 	bool **firstset;
@@ -35,11 +65,22 @@ private:
 	std::vector<bool> blankset;
 	bool ignore;
 	typedef std::vector<character> characterlist;
+	std::vector<characterlist> statelist;
+	int tempval;
+	void* Temp(int type);
+	int instrpos;
+	void gen(std::string s,int instr);
+	void gen(std::string s);
+	void backpatch(leballist list,int instr);
+	leballist merge(leballist l1, leballist l2);
+	std::vector<symboltable::ExToken> extokenstate;
+	symboltable::ExToken extoken;
+	symboltable* st; //
 	typedef std::vector<std::string> strlist;
 	std::vector<std::string> nonterminal, terminal;
-	std::vector<characterlist> statelist;
 	std::string lexcode;
 	derivate start;
+	int top;
 	derivate* getcharacter(character c);
 	derivate* createnewnode(std::string token);
 	strlist First(strlist s);
@@ -63,18 +104,16 @@ private:
 	int GOTO(int state, std::string s);
 	int getterminalpos(std::string s);
 	int getnonterminalpos(std::string s);
-	std::vector<int> statestack;
-
-
+	int  getlrpos(lex::Token token);
+	void loadtokeblist(lex& lexobject);
+	void Geneactiontable();
+	bool Scanner();
+	void per_process();
 	void Genestatetable();
 public:
 	Derivation(std::string s);
-	void per_process();
 	std::string  visitderivate();
-	bool Scanner();
-	int  getlrpos(lex::Token token);
-	void Geneactiontable();
 	void printstate();
+	void SDTaction();
 	bool LR(lex::Token& token);
-	void loadtokeblist(lex &lexobject);
 };
