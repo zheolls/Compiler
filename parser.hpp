@@ -1,8 +1,7 @@
-#include "lex.hpp"
 #include "symboltable.hpp"
 #include<vector>
 #include<iostream>
-class Derivation {
+class parser {
 private:
 	enum ACTIONTYPE
 	{
@@ -24,9 +23,9 @@ private:
 		character(int i, int j, int k);
 	};
 	struct SLRtabletuple {
-		Derivation::ACTIONTYPE action;
+		parser::ACTIONTYPE action;
 		int state;
-		Derivation::character c;
+		parser::character c;
 		SLRtabletuple();
 	};
 	typedef std::vector<int> leballist;
@@ -48,12 +47,13 @@ private:
 	struct attribute {
 		std::string NAME; // word 
 		int state;  //state
-		int type; //Type
+		symboltable::typeset type; //Type
 		int width;  //Varible Length
 		int offset;
 		int instr;
+		std::string op;
 		leballist nextlist,truelist,falselist;
-		void* addr;
+		int addr;
 		VAL value;
 		attribute();
 	};
@@ -73,11 +73,10 @@ private:
 	void gen(std::string s);
 	void backpatch(leballist list,int instr);
 	leballist merge(leballist l1, leballist l2);
-	std::vector<symboltable::ExToken> extokenstate;
-	symboltable::ExToken extoken;
+	std::vector<std::string> nonterminal, terminal;
+
 	symboltable* st; //
 	typedef std::vector<std::string> strlist;
-	std::vector<std::string> nonterminal, terminal;
 	std::string lexcode;
 	derivate start;
 	int top;
@@ -106,14 +105,19 @@ private:
 	int getnonterminalpos(std::string s);
 	int  getlrpos(lex::Token token);
 	void loadtokeblist(lex& lexobject);
-	void Geneactiontable();
-	bool Scanner();
 	void per_process();
 	void Genestatetable();
+	void SDTaction();
+
 public:
-	Derivation(std::string s);
+	std::vector<symboltable::ExToken> extokenstate;
+	symboltable::ExToken extoken;
+	parser(std::string s);
+	bool Scanner();
 	std::string  visitderivate();
 	void printstate();
-	void SDTaction();
+	void GenerateCode();
+	void Geneactiontable();
 	bool LR(lex::Token& token);
+	void SetSymboltable(symboltable &_st);
 };

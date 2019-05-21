@@ -1,6 +1,16 @@
-#include "Derivation.hpp"
+#include "parser.hpp"
 
-Derivation::Derivation(std::string s)
+parser::attribute::attribute()
+{
+	offset = 0;
+	addr = 0;
+	width = 0;
+	instr = 0;
+	type = symboltable::VOID;
+	state = 0;
+}
+
+parser::parser(std::string s)
 {
 	lexcode = s;
 	statelist.push_back(characterlist());
@@ -14,17 +24,14 @@ Derivation::Derivation(std::string s)
 	GOTOTABLE = nullptr;
 	ACTIONTABLE = nullptr;
 	ignore = false;
-	top = 0;
+	extokenstate.push_back(* new symboltable::ExToken);
+	top = 0; //State Stack Top
 	tempval = 0;
+	instrpos = -1;
 
 }
 
-void Derivation::per_process()
-{
-
-}
-
-Derivation::derivate* Derivation::createnewnode(std::string token)
+parser::derivate* parser::createnewnode(std::string token)
 {
 	derivate* newnode = new derivate;
 	newnode->NAME = token;
@@ -37,7 +44,7 @@ Derivation::derivate* Derivation::createnewnode(std::string token)
 		return nullptr;
 }
 
-bool Derivation::createderivation(std::string token, std::string code, int& i, derivate** p, derivate** q, derivate** r)
+bool parser::createderivation(std::string token, std::string code, int& i, derivate** p, derivate** q, derivate** r)
 {
 	if (token == "start") {
 		if (code[i + 1] == ':' && code[i + 2] == '\n') {
@@ -118,8 +125,8 @@ bool Derivation::createderivation(std::string token, std::string code, int& i, d
 
 	return false;
 }
-
-bool Derivation::Scanner()
+//Scanner derivation and create table
+bool parser::Scanner()
 {
 	int i = 0;
 	derivate* p = &start;
@@ -175,6 +182,35 @@ bool Derivation::Scanner()
 			sl.push_back(terminal[i]);
 	}
 	terminal = sl;
+
+	//SDT action
+	auto iter = terminal.begin();
+	while (iter != terminal.end()) {
+		if ((*iter)[0] == 'M') {
+			bool flag = true;
+			for (auto i = 2; i < iter->length(); ++i) {
+				if (iter->at(i) == '_') {
+					nonterminal.push_back(*iter);
+					p->brother = createnewnode(*iter);
+					p = p->brother;
+					p->son = createnewnode("blank");
+					iter = terminal.erase(iter);
+
+					flag = false;
+					break;
+				}
+			}
+			if (flag) {
+				iter++;
+			}
+		}
+		else
+		{
+			iter++;
+		}
+	}
+
+	//Initial Sheet
 	firstset = new bool* [nonterminal.size()];
 	followset = new bool* [nonterminal.size()];
 	for (int i = 0; i < nonterminal.size(); i++) {
@@ -222,6 +258,7 @@ bool Derivation::Scanner()
 			break;
 		}
 	}
+
 	//FIRSTSET
 	while (true) {
 		bool flag = false;
@@ -308,7 +345,7 @@ bool Derivation::Scanner()
 	return false;
 }
 
-bool Derivation::is_symbol(char s)
+bool parser::is_symbol(char s)
 {
 	std::string str = "+-=*/%&()[]{}:,<>;|!~";
 	for (int i = 0; i < str.length(); i++) {
@@ -318,7 +355,7 @@ bool Derivation::is_symbol(char s)
 	return false;
 }
 
-bool Derivation::is_terminal(std::string s)
+bool parser::is_terminal(std::string s)
 {
 	for (int i = 0; i < nonterminal.size(); i++) {
 		if (nonterminal[i] == s || s == "blank")
@@ -327,7 +364,7 @@ bool Derivation::is_terminal(std::string s)
 	return true;
 }
 
-std::string Derivation::visitderivate()
+std::string parser::visitderivate()
 {
 	std::string str = "";
 	for (derivate* i = &start; i != nullptr; i = (*i).brother) {
@@ -340,53 +377,56 @@ std::string Derivation::visitderivate()
 	return str;
 }
 
-void * Derivation::Temp(int type)
+void * parser::Temp(int type)
 {
 	switch (type)
 	{
-	case symboltable::typeset::VOID:
-		void* p;
+	case symboltable::typeset::VOID: {
+		void* p = new char;
 		return p;
-		break;
-	case symboltable::typeset::INT:
+		break; }
+	case symboltable::typeset::INT: {
 		int* p = new int;
 		return p;
-		break;
-	case symboltable::typeset::FLOAT:
+		break; }
+	case symboltable::typeset::FLOAT: {
 		float* p = new float;
 		return p;
-		break;
+		break; }
 	default:
 		break;
 	}
 
 	tempval++;
-	
+	void* p= new char;
+	return  p;
 }
-Derivation::INSTR::INSTR(std::string a, int b)
+
+parser::INSTR::INSTR(std::string a, int b)
 {
 	left = a;
 	right = b;
 }
 
-void Derivation::gen(std::string s, int instr)
+void parser::gen(std::string s, int instr)
 {
-	instrlist.push_back(Derivation::INSTR(s, instr));
+	instrlist.push_back(parser::INSTR(s, instr));
 }
 
-void Derivation::gen(std::string s)
+void parser::gen(std::string s)
 {
-	instrlist.push_back(Derivation::INSTR(s,-1));
+	instrlist.push_back(parser::INSTR(s,-1));
 }
 
-void Derivation::backpatch(leballist list, int instr)
+void parser::backpatch(leballist list, int instr)
 {
 	for (int i = 0; i < list.size(); i++) {
-		list[i] = instr;
+		if (instrlist.at(list[i]).right==-1)
+			instrlist.at(list[i]).right = instr;
 	}
 }
 
-Derivation::leballist Derivation::merge(leballist l1, leballist l2)
+parser::leballist parser::merge(leballist l1, leballist l2)
 {
 	int a = l1.size();
 	int b = l2.size();
@@ -406,7 +446,7 @@ Derivation::leballist Derivation::merge(leballist l1, leballist l2)
 	return l2;
 }
 
-Derivation::derivate* Derivation::getcharacter(Derivation::character c)
+parser::derivate* parser::getcharacter(parser::character c)
 {
 	int i = c.left;
 	int j = c.right;
@@ -444,7 +484,7 @@ Derivation::derivate* Derivation::getcharacter(Derivation::character c)
 	return p;
 }
 
-bool Derivation::terminal_is_exist(std::string s)
+bool parser::terminal_is_exist(std::string s)
 {
 	for (int i = 0; i < terminal.size(); i++) {
 		if (s == terminal[i])
@@ -453,7 +493,7 @@ bool Derivation::terminal_is_exist(std::string s)
 	return false;
 }
 
-bool Derivation::closure(Derivation::characterlist& I)
+bool parser::closure(parser::characterlist& I)
 {
 	int persize;
 	while (true) {
@@ -497,7 +537,7 @@ bool Derivation::closure(Derivation::characterlist& I)
 	return false;
 }
 
-bool Derivation::has_blank(strlist s)
+bool parser::has_blank(strlist s)
 {
 	for (int i = 0; i < s.size(); i++) {
 		if (s[i] == "blank")
@@ -506,7 +546,7 @@ bool Derivation::has_blank(strlist s)
 	return false;
 }
 
-bool Derivation::has_blank(derivate* p)
+bool parser::has_blank(derivate* p)
 {
 	bool flag = true;
 	for (derivate* q = p; q != nullptr; q = q->next ) {
@@ -520,7 +560,7 @@ bool Derivation::has_blank(derivate* p)
 	return flag;
 }
 
-bool Derivation::clequal(characterlist c1, characterlist c2)
+bool parser::clequal(characterlist c1, characterlist c2)
 {
 	if (c1.size() != c2.size())
 		return false;
@@ -539,7 +579,7 @@ bool Derivation::clequal(characterlist c1, characterlist c2)
 	return true;
 }
 
-Derivation::strlist Derivation::First(strlist s)
+parser::strlist parser::First(strlist s)
 {
 	strlist s2;
 	
@@ -573,14 +613,14 @@ Derivation::strlist Derivation::First(strlist s)
 	return set(s2);
 }
 
-Derivation::strlist Derivation::First(std::string s)
+parser::strlist parser::First(std::string s)
 {
 	strlist s2;
 	s2.push_back(s);
 	return First(s2);
 }
 
-Derivation::strlist Derivation::First(derivate *p)
+parser::strlist parser::First(derivate *p)
 {
 	strlist s2;
 	for (p ; p != nullptr; p = p->next) {
@@ -589,7 +629,7 @@ Derivation::strlist Derivation::First(derivate *p)
 	return First(s2);
 }
 
-Derivation::strlist Derivation::Follow(std::string s)
+parser::strlist parser::Follow(std::string s)
 {
 	strlist s2;
 	if (is_terminal(s)) {
@@ -606,7 +646,7 @@ Derivation::strlist Derivation::Follow(std::string s)
 	return s2;
 }
 
-Derivation::strlist Derivation::merge(strlist s1, strlist s2)
+parser::strlist parser::merge(strlist s1, strlist s2)
 {
 	strlist s3;
 	for (int i = 0; i < s1.size(); i++) {
@@ -623,14 +663,14 @@ Derivation::strlist Derivation::merge(strlist s1, strlist s2)
 	return set(s1);
 }
 
-Derivation::strlist Derivation::merge(strlist s1, std::string s2)
+parser::strlist parser::merge(strlist s1, std::string s2)
 {
 	strlist s3;
 	s3.push_back(s2);
 	return merge(s1, s3);
 }
 
-Derivation::strlist Derivation::set(strlist s)
+parser::strlist parser::set(strlist s)
 {
 	strlist s2;
 	for (int i = 0; i < s.size(); i++) {
@@ -647,7 +687,7 @@ Derivation::strlist Derivation::set(strlist s)
 	return s2;
 }
 
-bool Derivation::is_alpha(char s)
+bool parser::is_alpha(char s)
 {
 	if ((s >= 'a' && s <= 'z') || (s >= 'A' && s <= 'Z') || s == '_') {
 		return true;
@@ -656,7 +696,7 @@ bool Derivation::is_alpha(char s)
 		return false;
 }
 
-bool Derivation::is_digit(char s)
+bool parser::is_digit(char s)
 {
 	if (s >= '0' && s <= '9') {
 		return true;
@@ -665,7 +705,7 @@ bool Derivation::is_digit(char s)
 		return false;
 }
 
-bool Derivation::character_is_existed(characterlist cl, character c)
+bool parser::character_is_existed(characterlist cl, character c)
 {
 	for (int i = 0; i < cl.size(); i++) {
 		if (cl[i].left == c.left && cl[i].pos == c.pos && cl[i].right == c.right)
@@ -674,13 +714,13 @@ bool Derivation::character_is_existed(characterlist cl, character c)
 	return false;
 }
 
-int Derivation::GOTO(int state, std::string s)
+int parser::GOTO(int state, std::string s)
 {
 
 	return 0;
 }
 
-int Derivation::getterminalpos(std::string s)
+int parser::getterminalpos(std::string s)
 {
 	for (int i = 0; i < terminal.size(); i++) {
 		if (s == terminal[i]) {
@@ -690,7 +730,7 @@ int Derivation::getterminalpos(std::string s)
 	return -1;
 }
 
-int Derivation::getnonterminalpos(std::string s)
+int parser::getnonterminalpos(std::string s)
 {
 	for (int i = 0; i < nonterminal.size(); i++) {
 		if (s == nonterminal[i]) {
@@ -700,7 +740,7 @@ int Derivation::getnonterminalpos(std::string s)
 	return -1;
 }
 
-void Derivation::Genestatetable()
+void parser::Genestatetable()
 {
 	int setsize;
 	closure(statelist[0]);
@@ -785,7 +825,7 @@ void Derivation::Genestatetable()
 				c.pos++;
 				sl = Follow(nonterminal[c.left-1]);
 				for (int k = 0; k < sl.size(); k++) {
-					if (sl[k] == "else" && (nonterminal[c.left-1]== "G" ||
+					if (sl[k] == "else" && (
 						getcharacter(character(c.left, c.right, 0))->NAME == "if"))
 						continue;
 					ACTIONTABLE[i][getterminalpos(sl[k])].action = REDUCE;
@@ -800,7 +840,7 @@ void Derivation::Genestatetable()
 	}
 }
 
-void Derivation::Geneactiontable()
+void parser::Geneactiontable()
 {
 
 	ACTIONTABLE = new SLRtabletuple * [_MAX_STATE_NUMBER];
@@ -812,7 +852,7 @@ void Derivation::Geneactiontable()
 	Genestatetable();
 }
 
-void Derivation::printstate()
+void parser::printstate()
 {
 	for (int i = 0; i < statelist.size(); i++) {
 		std::cout << "state:" << i;
@@ -885,72 +925,126 @@ void Derivation::printstate()
 	
 }
 
-void Derivation::SDTaction()
+void parser::GenerateCode()
 {
-	symboltable::ExToken extoken = extokenstate[extokenstate.size() - 1];
+	for (int i = 0; i < instrlist.size(); i++) {
+		if (instrlist[i].right == -1) {
+			std::cout << i << ":" << instrlist[i].left  << std::endl;
+		}
+		else
+		{
+			std::cout << i << ":" << instrlist[i].left +" "+ std::to_string(instrlist[i].right) << std::endl;
+		}
+		
+	}
+}
 
-	int choose_0,choose_1;
+void parser::SDTaction()
+{
+	symboltable::ExToken *extoken = &extokenstate[extokenstate.size() - 1];
+	int choose_0=0, choose_1=0;
+
+	std::string CHOOSE = statestack[statestack.size() - 1].NAME;
+
+	if (CHOOSE[0]=='M'&& !is_terminal(CHOOSE)) {
+		char temp1[6], temp2[6];
+		int i = 1;
+		while (CHOOSE[i] != '_') {
+			temp1[i-1] = CHOOSE[i];
+			i++;
+		}
+		i++;
+		int j = 0;
+		for (i; i < CHOOSE.length(); i++) {
+			temp2[j] = CHOOSE[i];
+			j++;
+		}
+		choose_0 = std::atoi(temp1);
+		choose_1 = std::atoi(temp2);
+	}
+	else if (CHOOSE=="G")
+	{
+		choose_0 = 7;
+		choose_0 = 3;
+	}
+	else
+	{
+		return;
+	}
+
+
 	switch (choose_0)
 	{
 	case 0:
-
+		switch (choose_1)
+		{
+		case 0:
+			instrpos++;
+			backpatch(statestack[top - 1].nextlist, instrpos);
+			break;
+		case 1:
+			statestack[top].instr = ++instrpos;
+			backpatch(statestack[top - 1].nextlist, statestack[top].instr);
+			break;
+		default:
+			break;
+		}
 		break;
 	case 1: 
-			switch (choose_1)
-			{
-			case 0:
-				statestack[top].offset = 0;
-				break;
-			default:
-				break;
-			}
+		switch (choose_1)
+		{
+		case 0:
+			statestack[top].offset = 0;
+			break;
+		default:
+			break;
+		}
 		break;
 	case 2:
-			switch (choose_1)
-			{
-			case 0:
-				extoken.NAME = statestack[top].NAME;
-				extoken.TVAL = (symboltable::typeset) statestack[top - 3].type;
-				extoken.CAT = symboltable::VAL;
-				extoken.width = statestack[top - 3].width;
-				st->SetType(extoken);
-				break;
-			default:
-				break;
-			}
+		switch (choose_1)
+		{
+		case 0:
+			extoken->NAME = statestack[top-2].NAME;
+			extoken->TVAL = (symboltable::typeset) statestack[top - 3].type;
+			extoken->CAT = symboltable::VAL;
+			extoken->width = statestack[top - 3].width;
+			extoken->addr = statestack[top - 2].addr;
+			st->SetType(*extoken);
 			break;
+		default:
+			break;
+		}
 		break;
 	case 3:  //M2
 		switch (choose_1)
 		{
 		case 0:
-			extoken.TVAL = (symboltable::typeset) statestack[top - 1].type;
-			extoken.width = statestack[top - 1].width;
+			extoken->TVAL = statestack[top - 1].type;
+			extoken->width = statestack[top - 1].width;
 			break;
 		case 1:
 			statestack[top - 3].type = statestack[top - 1].type;
-			statestack[top - 3].type = statestack[top - 1].width;
+			statestack[top - 3].width = statestack[top - 1].width;
 
 			break;
 		case 2:
-			extoken.TVAL = symboltable::STRUCT;
+			extoken->TVAL = symboltable::STRUCT;
 
 			break;
 		case 3:
 			statestack[top - 3].type = statestack[top - 1].type;
-			statestack[top - 3].type = statestack[top - 1].width;
+			statestack[top - 3].width = statestack[top - 1].width;
 
 			break;
 		default:
 			break;
 		}
 		break;
-		break;
 	case 4:  //M3
 		switch (choose_1)
 		{
 		case 0:
-			statestack[top-1].type=symboltable::INT;
+			statestack[top - 1].type=symboltable::INT;
 			statestack[top - 1].width = 4;
 			break;
 		case 1:
@@ -961,21 +1055,26 @@ void Derivation::SDTaction()
 			statestack[top - 1].type = symboltable::BOOL;
 			statestack[top - 1].width = 1;
 			break;
+		case 3:
+			statestack[top - 1].type = symboltable::DOUBLE;
+			statestack[top - 1].width = 16;
+			break;
 		default:
 			break;
 		}
+		break;
 	case 5:
 		switch (choose_1)
 		{
 		case 0:
 			statestack[top - 4].type = symboltable::ARRAY;
-			extoken.UP.insert(extoken.UP.begin(), statestack[top - 3].value.intval);
+			extoken->UP.insert(extoken->UP.begin(), statestack[top - 3].value.intval);
 			statestack[top - 4].width = statestack[top - 3].value.intval * statestack[top - 1].width;
 			break;
 		case 1:
-			statestack[top].type = extoken.TVAL;
-			statestack[top].width = extoken.width;
-			extoken.ARRTVAL = extoken.TVAL;
+			statestack[top].type = extoken->TVAL;
+			statestack[top].width = extoken->width;
+			extoken->ARRTVAL = extoken->TVAL;
 			break;
 		default:
 			break;
@@ -984,33 +1083,53 @@ void Derivation::SDTaction()
 	case 6:
 		switch (choose_1)
 		{
-		case 0:
-			gen(st->get(statestack[top - 4].addr) + " = " + st->get(statestack[top - 2].addr));
+		case 0: {
+			instrpos++;
+			int posval = st->get(statestack[top - 4].NAME);
+			if (posval == -1) {
+				throw Error::stateError::identifer_not_defined;
+			}
+			statestack[top - 4].addr = posval;
+			gen(st->get(statestack[top - 4].addr) + " = " + st->get(statestack[top - 2].addr)); 
+		}
 			break;
 		case 1:
-			statestack[top].instr = ++instrpos;
+			statestack[top].instr = instrpos+1;
 			break;
 		case 2:
 			backpatch(statestack[top-4].truelist, statestack[top-2].instr);
-			statestack[top - 6].nextlist = merge(statestack[top-1].nextlist, statestack[top-4].falselist);
+			statestack[top - 6].nextlist = merge(statestack[top-4].falselist, statestack[top-1].nextlist);
 			break;
 		case 3:
-			statestack[top].instr = ++instrpos;
+			backpatch(statestack[top - 3].nextlist, statestack[top - 2].instr);
+			statestack[top - 3].nextlist, statestack[top - 1].nextlist;
 			break;
 		case 4:
-			statestack[top].instr = ++instrpos;
+			statestack[top - 4].nextlist = merge(statestack[top - 4].nextlist, statestack[top - 2].nextlist);
+			st->pp = st->pp->prev;
+
 			break;
 		case 5:
+			statestack[top].instr = ++instrpos;
+			gen("goto ", statestack[top - 6].instr);
 			backpatch(statestack[top - 1].nextlist, statestack[top - 6].instr);
 			backpatch(statestack[top - 4].truelist, statestack[top - 2].instr);
 			statestack[top - 7].nextlist = statestack[top - 4].falselist;
-			gen("goto ", statestack[top - 6].instr);
 			break;
 		case 6:
-			statestack[top].instr = ++instrpos;
+			statestack[top].instr = ++instrpos ;
+			statestack[top].nextlist.clear();
+			statestack[top].nextlist.push_back(instrpos);
+			gen("goto ");
 			break;
 		case 7:
+			backpatch(statestack[top - 8].truelist, statestack[top -6].instr);
+			backpatch(statestack[top - 8].falselist, statestack[top - 2].instr);
+			statestack[top - 10].nextlist = merge(statestack[top - 1].nextlist, merge(statestack[top - 4].nextlist, statestack[top - 5].nextlist));
+			break;
+		case 8:
 			backpatch(statestack[top - 3].nextlist, statestack[top - 2].instr);
+			statestack[top - 3].nextlist = merge(statestack[top - 1].nextlist, statestack[top - 3].nextlist);
 			break;
 		default:
 			break;
@@ -1020,7 +1139,8 @@ void Derivation::SDTaction()
 		switch (choose_1)
 		{
 		case 0:
-			statestack[top].nextlist.push_back(++instrpos);
+			statestack[top].instr = instrpos+1;
+			statestack[top].nextlist.push_back(instrpos);
 			gen("goto ");
 			break;
 		case 1:
@@ -1031,7 +1151,11 @@ void Derivation::SDTaction()
 			statestack[top - 4].nextlist = merge(statestack[top - 4].nextlist, statestack[top - 1].nextlist);
 			break;
 		case 3:
-			statestack[top].instr = ++instrpos;
+			statestack[top].falselist.clear();
+			statestack[top].truelist.clear();
+			statestack[top].nextlist.clear();
+
+			//statestack[top].instr = ++instrpos;
 			break;
 		default:
 			break;
@@ -1041,16 +1165,14 @@ void Derivation::SDTaction()
 		switch (choose_1)
 		{
 		case 0:
-			statestack[top].instr = ++instrpos;
+			statestack[top].instr = instrpos + 1;
 			break;
 		case 1:
-			
 			backpatch(statestack[top - 4].falselist, statestack[top - 2].instr);
 			statestack[top - 4].truelist = merge(statestack[top - 4].truelist, statestack[top - 1].truelist);
 			statestack[top - 4].falselist = statestack[top - 1].falselist;
 			break;
 		case 2:
-			statestack[top].instr = ++instrpos;
 			break;
 		case 3:
 			backpatch(statestack[top - 4].truelist, statestack[top - 2].instr);
@@ -1062,18 +1184,28 @@ void Derivation::SDTaction()
 			statestack[top - 2].falselist = statestack[top - 1].truelist;
 			break;
 		case 5:
+			statestack[top - 3].truelist.clear();
+			statestack[top - 3].falselist.clear();
 			statestack[top - 3].truelist.push_back(++instrpos);
 			statestack[top - 3].falselist.push_back(++instrpos);
-			gen("if" + st->get(statestack[top - 3].addr) + statestack[top - 2].NAME+ st->get(statestack[top - 1].addr) + "goto ");
+			gen("if " + st->get(statestack[top - 3].addr) +" "+ statestack[top - 2].op+ " "+ st->get(statestack[top - 1].addr) + " goto ");
 			gen("goto ");
 			break;
 		case 6:
-			statestack[top].truelist.push_back(++instrpos);
+			statestack[top - 1].truelist.clear();
+			statestack[top - 1].falselist.clear();
+			statestack[top - 1 ].truelist.push_back(++instrpos);
 			gen("goto ");
 			break;
 		case 7:
-			statestack[top].falselist.push_back(++instrpos);
+			statestack[top - 1].truelist.clear();
+			statestack[top - 1].falselist.clear();
+			statestack[top - 1].falselist.push_back(++instrpos);
 			gen("goto ");
+			break;
+		case 8:
+			statestack[top - 3].falselist = statestack[top - 2].falselist;
+			statestack[top - 3].truelist = statestack[top - 2].truelist;
 			break;
 		default:
 			break;
@@ -1085,21 +1217,26 @@ void Derivation::SDTaction()
 		case 0:
 			
 			break;
-		case 1: 
-			void* ss = Temp(statestack[top - 3].type);
-			gen("T_" + std::to_string(tempval) + " = " + st->get(statestack[top - 3].addr) + " + " + st->get(statestack[top - 1].addr));
+		case 1: {
+			instrpos++;
+			int ss = st->Temp(statestack[top - 3].type);
+			gen(st->get(ss) + " = " + st->get(statestack[top - 3].addr) + " + " + st->get(statestack[top - 1].addr));
 			statestack[top - 3].addr = ss;
-			break; 
-		case 2: 
-			void* ss = Temp(statestack[top - 3].type);
-			gen("T_" + std::to_string(tempval) + " = " + st->get(statestack[top - 3].addr) + " - " + st->get(statestack[top - 1].addr));
+			break; }
+		case 2: {
+			instrpos++;
+
+			int ss = st->Temp(statestack[top - 3].type);
+			gen(st->get(ss) + " = " + st->get(statestack[top - 3].addr) + " - " + st->get(statestack[top - 1].addr));
 			statestack[top - 3].addr = ss;
-			break;
-		case 3: 
-			void* ss = Temp(statestack[top - 1].type);
-			gen("T_" + std::to_string(tempval) + " = " +" minus " + st->get(statestack[top - 1].addr));
-			statestack[top - 3].addr = ss; 
-			break;
+			break; }
+		case 3: {
+			instrpos++;
+
+			int ss = st->Temp(statestack[top - 1].type);
+			gen(st->get(ss) + " = " + " minus " + st->get(statestack[top - 1].addr));
+			statestack[top - 3].addr = ss;
+			break; }
 		default:
 			break;
 		}
@@ -1110,16 +1247,21 @@ void Derivation::SDTaction()
 		case 0:
 
 			break;
-		case 1: 
-			void *ss = Temp(statestack[top - 3].type);
-			gen("T_"+std::to_string(tempval) + " = " + st->get(statestack[top - 3].addr) + " * " + st->get(statestack[top - 1].addr));
+		case 1: {
+			instrpos++;
+
+			int ss = st->Temp(statestack[top - 3].type);
+			gen(st->get(ss) + " = " + st->get(statestack[top - 3].addr) + " * " + st->get(statestack[top - 1].addr));
 			statestack[top - 3].addr = ss;
-			break; 
-		case 2: 
-			void* ss = Temp(statestack[top - 3].type);
-			gen("T_" + std::to_string(tempval) + " = " + st->get(statestack[top - 3].addr) + " / " + st->get(statestack[top - 1].addr));
+			break; }
+		case 2: {
+			instrpos++;
+
+			int ss = st->Temp(statestack[top - 3].type);
+			gen(st->get(ss) + " = " + st->get(statestack[top - 3].addr) + " / " + st->get(statestack[top - 1].addr));
 			statestack[top - 3].addr = ss;
-			break; 
+			break;
+		}
 		default:
 			break;
 		}
@@ -1131,16 +1273,41 @@ void Derivation::SDTaction()
 			statestack[top - 3].falselist = statestack[top - 2].falselist;
 			statestack[top - 3].truelist = statestack[top - 2].truelist;
 			break;
-		case 1: 
+		case 1: {
+			int posval = st->get(statestack[top - 1].NAME);
+			if (posval != -1) {
+				statestack[top - 1].addr = posval;
+
+			}
+			else
+			{
+				throw Error::stateError::identifer_not_defined + ":" + statestack[top - 1].NAME;
+			}}
 			break;
 		case 2: 
-				break;
-		case 3: 
-
+			break;
 		default:
 			break;
 		}
 		break;
+	case 12:
+		switch (choose_1)
+		{
+		case 0:
+			statestack[top - 1].op = statestack[top - 1].NAME;
+			break;
+		case 1:
+			statestack[top - 1].op = statestack[top - 1].NAME;
+			break;
+		case 2:
+			statestack[top - 1].op = statestack[top - 1].NAME;
+			break;
+		case 3:
+			statestack[top - 1].op = statestack[top - 1].NAME;
+			break;
+		default:
+			break;
+		}
 	default:
 		break;
 	}
@@ -1148,15 +1315,15 @@ void Derivation::SDTaction()
 
 }
 
-bool Derivation::LR(lex::Token &token)
+bool parser::LR(lex::Token &token)
 {
-	if (token.addr == nullptr&& (token.syn==99 || token.syn==100)) {
+	if (token.addr == -1 && (token.syn==99 || token.syn==100)) {
 
 		throw Error::stateError::identifer_not_defined;
 	}
 	bool CONTINUE=true;
 
-	//std::cout << token.val<<" ";
+	//std::cout << token<<" ";
 
 	//Error recovery
 	if (ignore) {
@@ -1168,9 +1335,11 @@ bool Derivation::LR(lex::Token &token)
 			if (followset[i][pos]) {
 				attribute* p = new attribute;
 				p->NAME = nonterminal[i];
-				p->addr = Temp(symboltable::typeset::VOID);
+				p->addr = st->Temp(symboltable::typeset::VOID);
 				p->state = GOTOTABLE[statestack[statestack.size() - 1].state][i].state;
 				statestack.push_back(*p);
+				top = statestack.size() - 1;
+
 				SDTaction();
 				ignore = false;
 				break;
@@ -1182,45 +1351,59 @@ bool Derivation::LR(lex::Token &token)
 	//LR analysis
 	while (CONTINUE) {
 
+
 		std::string a = token.val;
 		int pos = getlrpos(token);
 		if (pos == _CANT_FIND_TERMINAL) {
 			throw Error::SyntexError::syntexerror_1;
 		}
-		attribute *s = &statestack[statestack.size() - 1];
+		attribute* s = &statestack[statestack.size() - 1];
 		SLRtabletuple slr = ACTIONTABLE[s->state][getlrpos(token)];
 
 		//SHIST
 		if (slr.action == SHIFT) {
-			s->addr = token.addr;
-			s->NAME = token;
-			s->state = slr.state;
-			statestack.push_back(*s);
+			attribute* s2 = new attribute;
+			s2->addr = token.addr;
+			s2->NAME = token.val;
+			s2->state = slr.state;
+			statestack.push_back(*s2);
 			CONTINUE = false;
 		}
 		//REDUCE
 		else if (slr.action == REDUCE)
 		{
-			for (int j = 0; j < slr.c.pos; j++) {
-				statestack.pop_back();
+			if (slr.c.pos >=1 ) {
+				for (int j = 0; j < slr.c.pos - 1; j++) {
+					statestack.pop_back();
+				}
+				int tempstate = statestack[statestack.size() - 2].state;
+				s = &statestack[statestack.size() - 1];
+				s->state = GOTOTABLE[tempstate][slr.c.left - 1].state;
+				s->NAME = nonterminal.at(slr.c.left - 1);
 			}
-			s = &statestack[statestack.size() - 1];
-			attribute *s2 = new attribute;
-			s2->state = GOTOTABLE[s->state][slr.c.left - 1].state;
-			s2->NAME = nonterminal.at(slr.c.left - 1);
-			statestack.push_back(*s2);
+			else
+			{
+				s = &statestack[statestack.size() - 1];
+				attribute* s2 = new attribute;
+				s2->state = GOTOTABLE[s->state][slr.c.left - 1].state;
+				s2->NAME = nonterminal.at(slr.c.left - 1);
+				statestack.push_back(*s2);
+			}
+			top = statestack.size()-1;
 			SDTaction();
+
 		}
 		//ACCEPT
 		else if (slr.action == ACCEPT) {
 			std::cout << "ACCEPT" << std::endl;
+			SDTaction();
 			return true;
 		}
 		//Error process
-		else 
+		else
 		{
 			while (true) {
-				s = &statestack[statestack.size()-1];
+				s = &statestack[statestack.size() - 1];
 				for (int i = 0; i < nonterminal.size(); i++) {
 					if (GOTOTABLE[s->state][i].action == SHIFT) {
 						ignore = true;
@@ -1234,23 +1417,23 @@ bool Derivation::LR(lex::Token &token)
 				{
 					statestack.pop_back();
 				}
-
 			}
 			throw Error::SyntexError::syntexerror;
 		}
 
 		////Print state stack
-		//for (int i = 0; i < statestack.size(); i++) {
-		//	std::cout << statestack[i] << " ";
-		//}
-		//std::cout << std::endl;
 	}
 	return false;
 }
 
-int Derivation::getlrpos(lex::Token token)
+void parser::SetSymboltable(symboltable &_st)
 {
-	std::string s = token;
+	st = &_st;
+}
+
+int parser::getlrpos(lex::Token token)
+{
+	std::string s = token.val;
 	if (token.syn == _IDENTIFIER) {
 		return getterminalpos("id");
 	}
@@ -1273,32 +1456,32 @@ int Derivation::getlrpos(lex::Token token)
 	return _CANT_FIND_TERMINAL;
 }
 
-void Derivation::loadtokeblist(lex& lexobject)
+void parser::loadtokeblist(lex& lexobject)
 {
 
 }	  
 
-Derivation::character::character()
+parser::character::character()
 {
 	left = 0;
 	right = 0;
 	pos = 0;
 }
 
-Derivation::character::character(int i, int j, int k)
+parser::character::character(int i, int j, int k)
 {
 	left = i;
 	right = j;
 	pos = k;
 }
 
-Derivation::SLRtabletuple::SLRtabletuple()
+parser::SLRtabletuple::SLRtabletuple()
 {
 	action = ERROR;
 	state = 0;
 }
 
-Derivation::derivate::derivate()
+parser::derivate::derivate()
 {
 	NAME = "";
 	brother = nullptr;
@@ -1308,10 +1491,4 @@ Derivation::derivate::derivate()
 }
 
 
-
-
-
-Derivation::attribute::attribute()
-{
-}
 

@@ -17,6 +17,7 @@ namespace Error {
 		const std::string unique_identifer = "标识符重复定义";
 		const std::string type_errot = "类型未定义";
 		const std::string identifer_not_defined = "标识符未定义";
+		const std::string derivation_error = "语义动作过多";
 	};
 	namespace typeError {
 		const std::string havenotype = "没有对应的类型";

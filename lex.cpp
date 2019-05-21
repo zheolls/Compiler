@@ -117,7 +117,7 @@ void lex::per_process()
 
 bool lex::Scanner()
 {
-	token.addr = nullptr;
+	token.addr = 0;
 
 	std::string code = sourceCode;;
 	token.clear();

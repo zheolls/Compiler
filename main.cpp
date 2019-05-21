@@ -3,9 +3,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <iostream>
-#include "lex.hpp"
-#include "symboltable.hpp"
-#include "Derivation.hpp"
+#include "parser.hpp"
 int a = 1;
 
 std::string readFileIntoString(char* filename)
@@ -26,28 +24,37 @@ int main() {
 	scode = readFileIntoString(fn);
 	char* fn2 = (char*)"derivation.txt";
 	std::string str = readFileIntoString(fn2);
-	Derivation derivate = Derivation(str);
+
+
+	symboltable st = symboltable();
+
+	parser derivate = parser(str);
+	derivate.SetSymboltable(st);
 	derivate.Scanner();
 	//std::cout<<derivate.visitderivate();
 	derivate.Geneactiontable();
 	//derivate.printstate();
 	lex lex(scode);
 	std::string s;
-	symboltable st=symboltable();
 	//std::cout << lex.processedCode<<std::endl;
 	while (true) {
-		try {
+		//try {
 			if (!lex.Scanner()) {
+				st.Scanner(lex.token);
+
 				derivate.LR(lex.token);
 				break;
 			}
+
+			st.Scanner(lex.token);
 			derivate.LR(lex.token);
 			//tokenlist.push_back(lex.token);
-		}
-		catch (std::string e) {
-			std::cout << "(" << lex.line << "," << lex.pos << ") " << e << std::endl;;
-		}
+		//}
+		//catch (std::string e) {
+		//	std::cout << "(" << lex.line << "," << lex.pos << ") " << e << std::endl;;
+		//}
 	}
+	derivate.GenerateCode();
 
 
 	//std::cout << st.printsymbol();

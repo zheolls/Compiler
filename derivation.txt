@@ -1,5 +1,6 @@
 start:
-P S
+P S1 M0_0
+
 
 P:
 M1_0 D
@@ -17,20 +18,23 @@ B:
 int  M4_0
 float M4_1
 bool M4_2
+double M4_3
 
 array:
 [ int10 ] array M5_0
 M5_1
 
-
+S1:
+S
+S M6_1 S1 M6_8
 
 
 S:
 id = E; M6_0
-if (C) M6_1 S G M6_2
-while M6_3 (C) M6_4 S M6_5
-S M6_6 S M6_7
-{ S }
+if (C) M6_1 S  M6_2
+if (C) M6_1 S  M6_6 else M6_1 S M6_7
+while M6_1 (C) M6_1 S M6_5
+{ P S1 } M6_4
 
 G:
 M7_0 else M7_1 S M7_2
@@ -38,12 +42,13 @@ blank
 
 
 C:
-E || M8_0 E M8_1
-E && M8_2 E M8_3
-! E M8_4
+C || M8_0 C M8_1
+C && M8_0 C M8_3
+! C M8_4
 E rel E M8_5
 true M8_6
 false M8_7
+( C ) M8_8
 
 E:
 T
@@ -58,11 +63,11 @@ T / F M10_2
 
 F:
 ( E ) M11_0
-id
+id M11_1
 int10
 
 rel:
-<
->
-==
-!=
+< M12_0
+> M12_1
+== M12_2
+!= M12_3

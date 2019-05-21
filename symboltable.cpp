@@ -38,7 +38,7 @@ bool symboltable::Scanner(lex::Token &token)
 	if (pp->tl->size() == 0) {
 		initialTYPEL();
 	}
-	void* addr=nullptr;
+	int  addr=0;
 	_SYNBL *p = pp;
 	bool flag = true;
 	std::string str;
@@ -47,7 +47,7 @@ bool symboltable::Scanner(lex::Token &token)
 		if (token.syn==_IDENTIFIER)
 			if (token.val == p->TABLE[i].NAME) {
 				flag = false;
-				addr = &p->TABLE[i];
+				addr = i;
 				break;
 			}
 	}
@@ -61,16 +61,16 @@ bool symboltable::Scanner(lex::Token &token)
 				st.NAME = token.val;
 				st.ADDR = nullptr;
 				p->TABLE.push_back(st);
-				token.addr = &p->TABLE[p->TABLE.size() - 1];
+				token.addr = p->TABLE.size() - 1;
 				break;
 			case _NUMBER:
 				st.CAT = CONS;
 				st.NAME = "_CONS_";
 				str = token.val;
-				p->cl->push_back(str);
-				st.ADDR = (void*)&(p->cl[p->cl->size()-1]);
+				p->cl->push_back(std::stoi(str));
+				st.ADDR = &(p->cl->at(p->cl->size()-1));
 				p->TABLE.push_back(st);
-				token.addr = &p->TABLE[p->TABLE.size() - 1];
+				token.addr = p->TABLE.size() - 1;
 				break;
 			case 74: {
 				st.NAME = "_SUB_BLOCK_";
@@ -80,11 +80,11 @@ bool symboltable::Scanner(lex::Token &token)
 				p2->prev = p;
 				st.ADDR = p2;
 				p->TABLE.push_back(st);
-				token.addr = &p->TABLE[p->TABLE.size() - 1];
+				token.addr = p->TABLE.size() - 1;
 				break;
 			}
 			case 75: {
-				pp = p->prev;
+				//pp = p->prev;
 
 				break;
 			}
@@ -105,24 +105,23 @@ bool symboltable::Scanner(lex::Token &token)
 
 bool symboltable::SetType(ExToken& a)
 {
-	_SYNBL* p = pp;
-	int size = p->tl->size();
+	int size = pp->tl->size();
 	switch (a.TVAL)
 	{
 	case symboltable::ARRAY: {
 		ainfltuple alt;
 		alt.UP = a.UP;
 		if (a.ARRTVAL <= LONGDOUBLE) {
-			alt.TYPE = &p->tl->at(LONGDOUBLE);
+			alt.TYPE = &pp->tl->at(LONGDOUBLE);
 		}
 		else if (a.ARRTVAL == STRUCT) {
 			bool flag = false;
 			for (int i = typeset::LONGDOUBLE; i < size; i++) {
-				if (p->tl->at(i).TVAL == STRUCT)
+				if (pp->tl->at(i).TVAL == STRUCT)
 				{
-					if (((symboltuple*)(p->tl->at(i).TPOINT))->NAME == a.constomtype) {
+					if (((symboltuple*)(pp->tl->at(i).TPOINT))->NAME == a.constomtype) {
 						flag = true;
-						alt.TYPE = &p->tl->at(i);
+						alt.TYPE = &pp->tl->at(i);
 						break;
 					}
 				}
@@ -132,19 +131,19 @@ bool symboltable::SetType(ExToken& a)
 			}
 		}
 		alt.CLEN = a.width;
-		p->tl->push_back(typeltuple(ARRAY, &p->al[p->al->size()]));
-		p->al->push_back(alt);
-		((symboltuple*)(a.ADDR))->ADDR = &p->al[p->al->size() - 1];
+		pp->tl->push_back(typeltuple(ARRAY, &pp->al[pp->al->size()]));
+		pp->al->push_back(alt);
+		((symboltuple*)(a.ADDR))->ADDR = &pp->al[pp->al->size() - 1];
 		break; 
 	}
 	case symboltable::STRUCT: {
 		bool flag = false;
 		for (int i = 14; i < size; i++) {
-			if (p->tl->at(i).TVAL == STRUCT)
+			if (pp->tl->at(i).TVAL == STRUCT)
 			{
-				if (((symboltuple*)(p->tl->at(i).TPOINT))->NAME == a.constomtype) {
+				if (((symboltuple*)(pp->tl->at(i).TPOINT))->NAME == a.constomtype) {
 					flag = true;
-					a.TYPE = &p->tl[i];
+					a.TYPE = &pp->tl[i];
 					break;
 				}
 			}
@@ -159,7 +158,8 @@ bool symboltable::SetType(ExToken& a)
 	case symboltable::SUBBLOCK:
 		break;
 	default:
-		a.TYPE = & p->tl[a.TVAL];
+		pp->TABLE.at(a.addr).TYP=a.TVAL;
+		pp->TABLE.at(a.addr).CAT = a.CAT;
 		break;
 	}
 	return true;
@@ -199,17 +199,37 @@ int symboltable::GetTypeLength(_SYNBL& p, void* addr)
 
 symboltable::symboltable()
 {
-	pp = &synbl;
+	pp= new _SYNBL;
 }
 
-std::string symboltable::get(void * addr)
+int symboltable::Temp(int type)
 {
-	if (((symboltuple*)addr)->CAT==VAL) {
-		return ((symboltuple*)addr)->NAME;
+	TVP* tval = new TVP;
+	tval->no = tvpos;
+	tvpos++;
+	symboltuple *p = new symboltuple();
+	p->CAT =TV;
+	p->NAME = "TV_" + std::to_string(tvpos);
+	p->ADDR = tval;
+	p->TYP = type;
+	pp->TABLE.push_back(*p);
+	return pp->TABLE.size()-1;
+}
+
+std::string symboltable::get(int addr)
+{
+	symboltuple *a = &pp->TABLE[addr];
+	if (a->CAT==VAL) {
+		return a->NAME;
 	}
-	else if (((symboltuple*)addr)->CAT == VAL)
+	else if (a->CAT == CONS)
 	{
-		return std::to_string(*(int*)((symboltuple*)addr)->ADDR);
+		int* b = (int*)(a->ADDR);
+		return std::to_string(*b);
+	}
+	else if (a->CAT==TV)
+	{
+		return a->NAME;
 	}
 	throw Error::SyntexError::syntexerror;
 }
@@ -233,6 +253,33 @@ std::string symboltable::printsymbol(int deepth, _SYNBL *p)
 std::string symboltable::printsymbol()
 {
 	return printsymbol(0,pp);
+}
+
+int  symboltable::get(std::string val)
+{
+	auto j = pp->TABLE.begin();
+	for (j; j < pp->TABLE.end(); j++) {
+		if (j->NAME == val ) {
+			if (j->TYP !=VOID )
+				return std::distance(pp->TABLE.begin(),j);
+			else
+			{
+				break;
+			}
+		}
+
+	}
+
+	for (_SYNBL* e = pp; e != nullptr; e = e->prev) {
+		for (auto i = e->TABLE.begin(); i < e->TABLE.end(); i++) {
+			if (i->NAME == val) {
+				j = i;
+				return std::distance(pp->TABLE.begin(),j);
+			}
+		}
+	}
+
+	return -1;
 }
 
 symboltable::ainfltuple::ainfltuple()
@@ -265,4 +312,16 @@ symboltable::symboltuple::symboltuple()
 	TYP = 0;
 	CAT = VAL;
 	ADDR = nullptr;
+}
+
+symboltable::ExToken::ExToken()
+{
+	CAT = VAL;
+	TVAL = VOID;
+	ARRTVAL = VOID;
+	ADDR = nullptr;
+	TYPE = nullptr;
+	VALUE = nullptr;
+	CTP = 0;
+	width = 1;
 }

@@ -17,7 +17,7 @@ public:
 		std::string val;
 		std::string typeset;
 		std::string attr;
-		void* addr;
+		int addr;
 		void* TYPE;
 		int syn;
 	}token;
