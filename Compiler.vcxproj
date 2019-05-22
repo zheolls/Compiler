@@ -140,9 +140,9 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="back.txt" />
-    <Text Include="derivation.txt" />
+    <Text Include="grammar.txt" />
     <Text Include="syntex.txt" />
-    <Text Include="test.txt" />
+    <Text Include="default.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -5,31 +5,18 @@
 class lex {
 private:
 	int syn;
-	int ptr;
-	int codeLength;
-
-public:
-	int line;
-	int pos;
+	
 	std::string sourceCode;
 	std::string processedCode;
-	struct Token : std::string {
-		std::string val;
-		std::string typeset;
-		std::string attr;
-		int addr;
-		void* TYPE;
-		int syn;
-	}token;
-	lex(std::string s);
-	lex();
+	int ptr;
+	int codeLength;
 	const std::string reserveWord[_RESERVE_NUM] = {
-		"auto", "break", "case", "char", "const", "continue",
-		"default", "do", "double", "else", "enum", "extern",
-		"float", "for", "goto", "if","include", "int", "long","namesapce",
-		"false", "return", "short", "signed", "sizeof", "static",
-		"struct", "switch", "typedef", "union", "unsigned","using", "void",
-		"true", "while"
+	"auto", "break", "case", "char", "const", "continue",
+	"default", "do", "double", "else", "enum", "extern",
+	"float", "for", "goto", "if","include", "int", "long","namesapce",
+	"false", "return", "short", "signed", "sizeof", "static",
+	"struct", "switch", "typedef", "union", "unsigned","using", "void",
+	"true", "while"
 	};
 	const std::string operatorWord[_OPERATOR_NUM] = {
 	   "+","++","+=","-","--","-=","->","*","*=","/","/=","<","<=","<<",">",">=",">>","=","==","!",
@@ -46,5 +33,18 @@ public:
 	bool is_delimiter(char s);
 	bool is_legal(char s);
 	void per_process();
+public:
+	struct Token : std::string {
+		std::string val;
+		std::string typeset;
+		std::string attr;
+		int addr;
+		void* TYPE;
+		int syn;
+	}token;
+	int line;
+	int pos;
+	lex(std::string s);
+	lex();
 	bool Scanner();
 };

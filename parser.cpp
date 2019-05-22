@@ -1,5 +1,4 @@
 #include "parser.hpp"
-
 parser::attribute::attribute()
 {
 	offset = 0;
@@ -8,6 +7,8 @@ parser::attribute::attribute()
 	instr = 0;
 	type = symboltable::VOID;
 	state = 0;
+	op = "";
+	type = symboltable::typeset::VOID;
 }
 
 parser::parser(std::string s)
@@ -30,6 +31,7 @@ parser::parser(std::string s)
 	instrpos = -1;
 
 }
+
 
 parser::derivate* parser::createnewnode(std::string token)
 {
@@ -852,91 +854,97 @@ void parser::Geneactiontable()
 	Genestatetable();
 }
 
-void parser::printstate()
+std::string parser::printstate()
 {
+	std::stringstream s;
+	s << "STATELIST:" << '\n';
 	for (int i = 0; i < statelist.size(); i++) {
-		std::cout << "state:" << i;
+		s << "state:" << i;
 		for (int j = 0; j < statelist[i].size(); j++) {
-			std::cout << " (" << statelist[i][j].left << "," << statelist[i][j].right << "," << statelist[i][j].pos << ")";
+			s << " (" << statelist[i][j].left << "," << statelist[i][j].right << "," << statelist[i][j].pos << ")";
 		}
-		std::cout << std::endl;
+		s << std::endl;
 	}
-
+	s << std::endl<<"TERMINAL:\n";
 	for (int i = 0; i < terminal.size(); i++) {
-		std::cout << terminal[i] << "  ";
+		s << terminal[i] << "  ";
 	}
-	std::cout << std::endl;
+	s << std::endl;
+	s << std::endl << "NONTERMINAL:\n";
 	for (int i = 0; i < nonterminal.size(); i++) {
-		std::cout << nonterminal[i] << "  ";
+		s << nonterminal[i] << "  ";
 	}
-	std::cout << std::endl;
-
+	s << std::endl;
+	s << std::endl << "ACTIONTABLE:\n";
 	for (int i = 0; i < statelist.size(); i++) {
-		std::cout << "state:" << i<<" ";
+		s << "state:" << i<<" ";
 		for (int j = 0; j < terminal.size(); j++) {
 			if (ACTIONTABLE[i][j].action == SHIFT) {
-				std::cout << "S";
-				std::cout << ACTIONTABLE[i][j].state << " ";
+				s << "S";
+				s << ACTIONTABLE[i][j].state << " ";
 
 			}
 			else if (ACTIONTABLE[i][j].action == REDUCE) {
-				std::cout << "R";
-				std::cout << ACTIONTABLE[i][j].c.left<<","<< ACTIONTABLE[i][j].c.right << " ";
+				s << "R";
+				s << ACTIONTABLE[i][j].c.left<<","<< ACTIONTABLE[i][j].c.right << " ";
 			}
 			else if (ACTIONTABLE[i][j].action == ACCEPT) {
 				std ::cout << "ACC";
 			}
 			else
 			{
-				std::cout << "E ";
+				s << "E ";
 			}
 		}
-		std::cout << "GOTO  ";
+		s << "GOTO  ";
 		for (int j = 0; j < nonterminal.size(); j++) {
-			std::cout << GOTOTABLE[i][j].state << " ";
+			s << GOTOTABLE[i][j].state << " ";
 		}
-		std::cout << std::endl;
+		s << std::endl;
+	}
+	s << std::endl << "FOLLOWSET:\n";
+	for (int i = 0; i < nonterminal.size(); i++) {
+		s << nonterminal[i] << ": ";
+		for (int j = 0; j < terminal.size(); j++) {
+			s << followset[i][j]<< " ";
+		}
+		s << std::endl;
+	}
+	s << std::endl << "FIRSTSET:\n";
+	for (int i = 0; i < nonterminal.size(); i++) {
+		s << nonterminal[i] << ": ";
+		for (int j = 0; j < terminal.size(); j++) {
+			s << firstset[i][j] << " ";
+		}
+		s << std::endl;
+	}
+	s << std::endl << "BLANKSET:\n";
+	for (int i = 0; i < nonterminal.size(); i++) {
+		s << nonterminal[i] << ": ";
+		s << blankset[i] << std::endl;
 	}
 
-	for (int i = 0; i < nonterminal.size(); i++) {
-		std::cout << nonterminal[i] << ": ";
-		for (int j = 0; j < terminal.size(); j++) {
-			std::cout << followset[i][j]<< " ";
-		}
-		std::cout << std::endl;
-	}
-	for (int i = 0; i < nonterminal.size(); i++) {
-		std::cout << nonterminal[i] << ": ";
-		for (int j = 0; j < terminal.size(); j++) {
-			std::cout << firstset[i][j] << " ";
-		}
-		std::cout << std::endl;
-	}
-	for (int i = 0; i < nonterminal.size(); i++) {
-		std::cout << nonterminal[i] << ": ";
-		std::cout << blankset[i] << std::endl;
-	}
-	//for (int i = 0; i < statelist.size(); i++) {
-	//	std::cout << nonterminal[i] << ": ";
-	//	for (int j = 0; j < nonterminal.size(); j++) {
-	//		std::cout << GOTOTABLE[i][j].state << " ";
-	//	}
-	//	std::cout << std::endl;
-	
+	std::string ss;
+	s >> ss;
+	return ss;
 }
 
-void parser::GenerateCode()
+std::string parser::GenerateCode()
 {
+	std::stringstream s;
+
 	for (int i = 0; i < instrlist.size(); i++) {
 		if (instrlist[i].right == -1) {
-			std::cout << i << ":" << instrlist[i].left  << std::endl;
+			s << i << ":" << instrlist[i].left  << std::endl;
 		}
 		else
 		{
-			std::cout << i << ":" << instrlist[i].left +" "+ std::to_string(instrlist[i].right) << std::endl;
+			s << i << ":" << instrlist[i].left +" "+ std::to_string(instrlist[i].right) << std::endl;
 		}
 		
 	}
+	std::string ss=s.str();
+	return ss;
 }
 
 void parser::SDTaction()
@@ -1323,7 +1331,6 @@ bool parser::LR(lex::Token &token)
 	}
 	bool CONTINUE=true;
 
-	//std::cout << token<<" ";
 
 	//Error recovery
 	if (ignore) {
@@ -1350,8 +1357,15 @@ bool parser::LR(lex::Token &token)
 
 	//LR analysis
 	while (CONTINUE) {
+		if (statestack[top].NAME[0] != 'M') {
+			for (auto i = statestack.begin(); i < statestack.end(); i++) {
+				if (i->NAME[0] == 'M')
+					continue;
+				as<< i->NAME << " ";
+			}
+			as << std::endl;
 
-
+		}
 		std::string a = token.val;
 		int pos = getlrpos(token);
 		if (pos == _CANT_FIND_TERMINAL) {
@@ -1395,7 +1409,6 @@ bool parser::LR(lex::Token &token)
 		}
 		//ACCEPT
 		else if (slr.action == ACCEPT) {
-			std::cout << "ACCEPT" << std::endl;
 			SDTaction();
 			return true;
 		}

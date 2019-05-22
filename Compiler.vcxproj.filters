@@ -51,16 +51,16 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="derivation.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="test.txt">
-      <Filter>资源文件</Filter>
-    </Text>
     <Text Include="syntex.txt">
       <Filter>资源文件</Filter>
     </Text>
     <Text Include="back.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="grammar.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="default.txt">
       <Filter>资源文件</Filter>
     </Text>
   </ItemGroup>

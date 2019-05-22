@@ -103,7 +103,7 @@ bool symboltable::Scanner(lex::Token &token)
 	return true;
 }
 
-bool symboltable::SetType(ExToken& a)
+bool symboltable::SetType(symboltable::ExToken& a)
 {
 	int size = pp->tl->size();
 	switch (a.TVAL)

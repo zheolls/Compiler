@@ -1,6 +1,8 @@
 #include "symboltable.hpp"
 #include<vector>
 #include<iostream>
+#include <sstream>
+
 class parser {
 private:
 	enum ACTIONTYPE
@@ -29,7 +31,6 @@ private:
 		SLRtabletuple();
 	};
 	typedef std::vector<int> leballist;
-
 	struct INSTR
 	{
 		std::string left;
@@ -105,7 +106,6 @@ private:
 	int getnonterminalpos(std::string s);
 	int  getlrpos(lex::Token token);
 	void loadtokeblist(lex& lexobject);
-	void per_process();
 	void Genestatetable();
 	void SDTaction();
 
@@ -113,10 +113,11 @@ public:
 	std::vector<symboltable::ExToken> extokenstate;
 	symboltable::ExToken extoken;
 	parser(std::string s);
+	std::stringstream as;
 	bool Scanner();
 	std::string  visitderivate();
-	void printstate();
-	void GenerateCode();
+	std::string printstate();
+	std::string GenerateCode();
 	void Geneactiontable();
 	bool LR(lex::Token& token);
 	void SetSymboltable(symboltable &_st);
