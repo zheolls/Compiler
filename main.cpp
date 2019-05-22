@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
 	bool haserror=false;
 	lex lex(scode);
 	std::string s;
-	
+	Parser.setlex(lex);
 	while (true) {
 		try {
 			if (!lex.Scanner()) {
@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 			std::cout << "(" << lex.line << "," << lex.pos << ") " << e << std::endl;;
 		}
 	}
-	if (haserror) {
+	if (haserror || Parser.haserror) {
 		return 0;
 	}
 

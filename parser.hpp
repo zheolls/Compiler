@@ -106,6 +106,7 @@ private:
 	int getnonterminalpos(std::string s);
 	int  getlrpos(lex::Token token);
 	void loadtokeblist(lex& lexobject);
+	lex* lexob;
 	void Genestatetable();
 	void SDTaction();
 
@@ -115,10 +116,12 @@ public:
 	parser(std::string s);
 	std::stringstream as;
 	bool Scanner();
+	bool haserror;
 	std::string  visitderivate();
 	std::string printstate();
 	std::string GenerateCode();
 	void Geneactiontable();
 	bool LR(lex::Token& token);
+	void setlex(lex &lexo);
 	void SetSymboltable(symboltable &_st);
 };

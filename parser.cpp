@@ -13,6 +13,7 @@ parser::attribute::attribute()
 
 parser::parser(std::string s)
 {
+	haserror = false;
 	lexcode = s;
 	statelist.push_back(characterlist());
 	statelist[0].push_back(character(0, 0, 0));
@@ -1333,27 +1334,27 @@ bool parser::LR(lex::Token &token)
 
 
 	//Error recovery
-	if (ignore) {
-		int pos = getlrpos(token);
-		if (pos == _CANT_FIND_TERMINAL) {
-			return false;
-		}
-		for (int i = 0; i < nonterminal.size(); i++) {
-			if (followset[i][pos]) {
-				attribute* p = new attribute;
-				p->NAME = nonterminal[i];
-				p->addr = st->Temp(symboltable::typeset::VOID);
-				p->state = GOTOTABLE[statestack[statestack.size() - 1].state][i].state;
-				statestack.push_back(*p);
-				top = statestack.size() - 1;
+	//if (ignore) {
+	//	int pos = getlrpos(token);
+	//	if (pos == _CANT_FIND_TERMINAL) {
+	//		return false;
+	//	}
+	//	for (int i = 0; i < nonterminal.size(); i++) {
+	//		if (followset[i][pos]&& nonterminal[i][0]!='M') {
+	//			attribute* p = new attribute;
+	//			p->NAME = nonterminal[i];
+	//			p->addr = st->Temp(symboltable::typeset::VOID);
+	//			p->state = GOTOTABLE[statestack[statestack.size() - 1].state][i].state;
+	//			statestack.push_back(*p);
+	//			top = statestack.size() - 1;
 
-				SDTaction();
-				ignore = false;
-				break;
-			}
-			
-		}
-	}
+	//			SDTaction();
+	//			ignore = false;
+	//			break;
+	//		}
+	//		
+	//	}
+	//}
 
 	//LR analysis
 	while (CONTINUE) {
@@ -1417,13 +1418,28 @@ bool parser::LR(lex::Token &token)
 		{
 			while (true) {
 				s = &statestack[statestack.size() - 1];
+				//for (int i = 0; i < nonterminal.size(); i++) {
+				//	if (GOTOTABLE[s->state][i].action == SHIFT) {
+				//		ignore = true;
+				//		break;
+				//	}
+				//}
 				for (int i = 0; i < nonterminal.size(); i++) {
-					if (GOTOTABLE[s->state][i].action == SHIFT) {
+					if (GOTOTABLE[s->state][i].action == SHIFT && followset[i][getterminalpos(token.val)]) {
+						attribute* p = new attribute;
+						p->NAME = nonterminal[i];
+						p->state = GOTOTABLE[s->state][i].state;
+						statestack.push_back(*p);
 						ignore = true;
 						break;
 					}
 				}
+
+
 				if (ignore) {
+					ignore = false;
+					haserror = true;
+					std::cout << "(" << lexob->line << "," << lexob->pos << ") " << Error::SyntexError::syntexerror << std::endl;
 					break;
 				}
 				else
@@ -1431,12 +1447,15 @@ bool parser::LR(lex::Token &token)
 					statestack.pop_back();
 				}
 			}
-			throw Error::SyntexError::syntexerror;
 		}
-
-		////Print state stack
 	}
+
 	return false;
+}
+
+void parser::setlex(lex& lexo)
+{
+	lexob = &lexo;
 }
 
 void parser::SetSymboltable(symboltable &_st)
